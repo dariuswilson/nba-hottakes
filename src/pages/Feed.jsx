@@ -4,7 +4,7 @@ import { moderateContent } from "../utils/moderate";
 
 const EMOJIS = ["🔥", "💀", "🐐", "😂", "👀"];
 
-export default function Feed({ username }) {
+export default function Feed({ username, onProfileClick }) {
   const [takes, setTakes] = useState([]);
   const [newTake, setNewTake] = useState("");
   const [user, setUser] = useState(null);
@@ -18,7 +18,7 @@ export default function Feed({ username }) {
   const fetchTakes = async () => {
     const { data } = await supabase
       .from("takes")
-      .select("*")
+      .select("*, profiles(avatar_url)")
       .order("created_at", { ascending: false });
     setTakes(data || []);
   };
@@ -58,6 +58,27 @@ export default function Feed({ username }) {
       await fetchComments();
     };
     loadData();
+
+    const channel = supabase
+      .channel("realtime-feed")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "takes" },
+        () => fetchTakes(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "reactions" },
+        () => fetchReactions(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "comments" },
+        () => fetchComments(),
+      )
+      .subscribe();
+
+    return () => supabase.removeChannel(channel);
   }, []);
 
   const postTake = async () => {
@@ -138,6 +159,12 @@ export default function Feed({ username }) {
             🏀 NBA Hot Takes
           </h1>
           <button
+            onClick={onProfileClick}
+            className="text-zinc-400 hover:text-white text-sm transition"
+          >
+            👤 Profile
+          </button>
+          <button
             onClick={handleLogout}
             className="text-zinc-400 hover:text-white text-sm"
           >
@@ -174,8 +201,16 @@ export default function Feed({ username }) {
           {takes.map((take) => (
             <div key={take.id} className="bg-zinc-900 rounded-2xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-sm font-bold">
-                  {take.username?.[0]?.toUpperCase()}
+                <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-sm font-bold overflow-hidden">
+                  {take.profiles?.avatar_url ? (
+                    <img
+                      src={take.profiles.avatar_url}
+                      alt="avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    take.username?.[0]?.toUpperCase()
+                  )}
                 </div>
                 <span className="text-zinc-400 text-sm">@{take.username}</span>
                 <span className="text-zinc-600 text-xs ml-auto">

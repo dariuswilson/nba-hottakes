@@ -3,38 +3,48 @@ import { supabase } from "./supabase";
 import Login from "./pages/Login";
 import Feed from "./pages/Feed";
 import UsernameSetup from "./pages/UsernameSetup";
+import Profile from "./pages/Profile";
 
 export default function App() {
   const [session, setSession] = useState(null);
   const [username, setUsername] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState("feed");
 
   const fetchUsername = async (userId) => {
-    console.log("fetching username for", userId);
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("profiles")
       .select("username")
       .eq("user_id", userId)
       .maybeSingle();
-    console.log("profile result", data, error);
     setUsername(data?.username || null);
   };
 
   useEffect(() => {
     const loadSession = async () => {
-      console.log("loading session...");
       const {
         data: { session },
-        error,
       } = await supabase.auth.getSession();
-      console.log("session result", session, error);
       setSession(session);
       if (session) await fetchUsername(session.user.id);
-      console.log("setting loading false");
       setLoading(false);
     };
 
     loadSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setSession(session);
+      if (session) {
+        await fetchUsername(session.user.id);
+      } else {
+        setUsername(null);
+      }
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   if (loading)
@@ -47,5 +57,7 @@ export default function App() {
   if (!session) return <Login />;
   if (!username)
     return <UsernameSetup user={session.user} onComplete={setUsername} />;
-  return <Feed username={username} />;
+  if (page === "profile")
+    return <Profile username={username} onBack={() => setPage("feed")} />;
+  return <Feed username={username} onProfileClick={() => setPage("profile")} />;
 }
