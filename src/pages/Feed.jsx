@@ -79,7 +79,7 @@ export default function Feed({ username, onProfileClick }) {
       .subscribe();
 
     return () => supabase.removeChannel(channel);
-  }, []);
+  }, []); // Comment
 
   const postTake = async () => {
     if (!newTake.trim()) return;
