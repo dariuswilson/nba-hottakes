@@ -65,12 +65,21 @@ export default function App() {
         setSession(session);
         const name = await fetchUsername(session.user.id);
         setUsername(name);
-        const { data: modData } = await supabase
-          .from("moderators")
-          .select("user_id")
-          .eq("user_id", session.user.id)
-          .maybeSingle();
-        setIsModerator(!!modData);
+        try {
+          const res = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/moderators?select=user_id&user_id=eq.${session.user.id}&limit=1`,
+            {
+              headers: {
+                apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+                Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+              },
+            },
+          );
+          const modData = await res.json();
+          setIsModerator(modData?.length > 0);
+        } catch {
+          setIsModerator(false);
+        }
       } catch (_err) {
         console.log("init error:", _err);
       }
@@ -88,12 +97,21 @@ export default function App() {
       if (session) {
         const name = await fetchUsername(session.user.id);
         setUsername(name);
-        const { data: modData } = await supabase
-          .from("moderators")
-          .select("user_id")
-          .eq("user_id", session.user.id)
-          .maybeSingle();
-        setIsModerator(!!modData);
+        try {
+          const res = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/moderators?select=user_id&user_id=eq.${session.user.id}&limit=1`,
+            {
+              headers: {
+                apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+                Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+              },
+            },
+          );
+          const modData = await res.json();
+          setIsModerator(modData?.length > 0);
+        } catch {
+          setIsModerator(false);
+        }
       } else {
         setUsername(null);
         setIsModerator(false);
