@@ -137,6 +137,7 @@ export default function Profile({ username, user, isModerator, onBack }) {
   const [activeTab, setActiveTab] = useState("posts");
   const [visiblePosts, setVisiblePosts] = useState(POSTS_PER_PAGE);
   const [visibleComments, setVisibleComments] = useState(POSTS_PER_PAGE);
+  const [gameTakes, setGameTakes] = useState([]);
 
   const fetchProfile = async () => {
     if (!user) return;
@@ -179,11 +180,22 @@ export default function Profile({ username, user, isModerator, onBack }) {
     setComments(data || []);
   };
 
+  const fetchGameTakes = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("game_takes")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+    setGameTakes(data || []);
+  };
+
   useEffect(() => {
     const loadData = async () => {
       await fetchProfile();
       await fetchTakes();
       await fetchComments();
+      await fetchGameTakes();
     };
     loadData();
   }, []);
@@ -461,6 +473,16 @@ export default function Profile({ username, user, isModerator, onBack }) {
           >
             Comments ({comments.length})
           </button>
+          <button
+            onClick={() => setActiveTab("game")}
+            className="flex-1 py-2 rounded-lg text-sm font-medium transition"
+            style={{
+              background: activeTab === "game" ? "#f97316" : "transparent",
+              color: activeTab === "game" ? "white" : "#71717a",
+            }}
+          >
+            Game Posts ({gameTakes.length})
+          </button>
         </div>
 
         {/* Posts tab */}
@@ -562,6 +584,39 @@ export default function Profile({ username, user, isModerator, onBack }) {
                 remaining)
               </button>
             )}
+          </div>
+        )}
+        {activeTab === "game" && (
+          <div className="space-y-3">
+            {gameTakes.length === 0 && (
+              <div className="text-center py-12 text-zinc-600">
+                <p className="text-4xl mb-3">🏀</p>
+                <p>No game posts yet!</p>
+              </div>
+            )}
+            {gameTakes.map((take) => (
+              <div
+                key={take.id}
+                className="rounded-2xl p-4"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #1c1c1e 0%, #2a2a2e 100%)",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                }}
+              >
+                <p className="text-xs text-zinc-500 mb-2">🏀 Game post</p>
+                <p className="text-white text-sm leading-relaxed">
+                  {take.content}
+                </p>
+                <p className="text-zinc-600 text-xs mt-3">
+                  {new Date(take.created_at).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </p>
+              </div>
+            ))}
           </div>
         )}
       </div>

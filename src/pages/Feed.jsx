@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../supabase";
 import { moderateContent } from "../utils/moderate";
+import GamesBar from "../components/GamesBar";
 
 const EMOJIS = ["🔥", "💀", "🐐", "😂", "👀"];
 
@@ -9,6 +10,7 @@ export default function Feed({
   user,
   onProfileClick,
   onViewProfile,
+  onGameClick,
 }) {
   const [takes, setTakes] = useState([]);
   const [newTake, setNewTake] = useState("");
@@ -198,6 +200,7 @@ export default function Feed({
             className="w-full bg-transparent text-white placeholder-zinc-500 resize-none outline-none text-sm"
             rows={3}
           />
+          <GamesBar onGameClick={onGameClick} />
           <div className="flex justify-end mt-2">
             <button
               onClick={postTake}

@@ -5,6 +5,7 @@ import Feed from "./pages/Feed";
 import UsernameSetup from "./pages/UsernameSetup";
 import Profile from "./pages/Profile";
 import ViewProfile from "./pages/ViewProfile";
+import GameFeed from "./pages/GameFeed";
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -13,6 +14,7 @@ export default function App() {
   const [page, setPage] = useState("feed");
   const [viewingUsername, setViewingUsername] = useState(null);
   const [isModerator, setIsModerator] = useState(false);
+  const [viewingGame, setViewingGame] = useState(null);
 
   const fetchUsername = async (userId) => {
     try {
@@ -152,6 +154,19 @@ export default function App() {
         onBack={() => setPage("feed")}
       />
     );
+  if (page === "gameFeed")
+    return (
+      <GameFeed
+        game={viewingGame}
+        user={session.user}
+        username={username}
+        onBack={() => setPage("feed")}
+        onViewProfile={(u) => {
+          setViewingUsername(u);
+          setPage("viewProfile");
+        }}
+      />
+    );
   return (
     <Feed
       username={username}
@@ -161,6 +176,10 @@ export default function App() {
       onViewProfile={(u) => {
         setViewingUsername(u);
         setPage("viewProfile");
+      }}
+      onGameClick={(g) => {
+        setViewingGame(g);
+        setPage("gameFeed");
       }}
     />
   );
