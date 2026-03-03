@@ -22,6 +22,7 @@ export default function Feed({
   const [error, setError] = useState("");
   const [moderatorIds, setModeratorIds] = useState(new Set());
   const [visibleTakes, setVisibleTakes] = useState(10);
+  const [avatarUrl, setAvatarUrl] = useState(null);
 
   const fetchModerators = async () => {
     const { data } = await supabase.from("moderators").select("user_id");
@@ -67,6 +68,13 @@ export default function Feed({
       await fetchReactions();
       await fetchComments();
       await fetchModerators();
+
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("avatar_url")
+        .eq("user_id", user.id)
+        .single();
+      setAvatarUrl(profileData?.avatar_url || null);
     };
     loadData();
 
@@ -213,8 +221,16 @@ export default function Feed({
                 color: "#f97316",
               }}
             >
-              <div className="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center text-xs font-bold text-white">
-                {username?.[0]?.toUpperCase()}
+              <div className="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center text-xs font-bold text-white overflow-hidden">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="avatar"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  username?.[0]?.toUpperCase()
+                )}
               </div>
               <span className="hidden sm:inline">@{username}</span>
             </button>
@@ -246,8 +262,16 @@ export default function Feed({
           }}
         >
           <div className="flex gap-3">
-            <div className="w-9 h-9 rounded-full bg-orange-500 flex items-center justify-center text-sm font-black flex-shrink-0">
-              {username?.[0]?.toUpperCase()}
+            <div className="w-9 h-9 rounded-full bg-orange-500 flex items-center justify-center text-sm font-black flex-shrink-0 overflow-hidden">
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt="avatar"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                username?.[0]?.toUpperCase()
+              )}
             </div>
             <div className="flex-1">
               {error && (
