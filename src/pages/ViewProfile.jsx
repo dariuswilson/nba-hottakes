@@ -375,6 +375,16 @@ export default function ViewProfile({
           >
             Comments ({comments.length})
           </button>
+          <button
+            onClick={() => setActiveTab("game")}
+            className="flex-1 py-2 rounded-lg text-sm font-medium transition"
+            style={{
+              background: activeTab === "game" ? "#f97316" : "transparent",
+              color: activeTab === "game" ? "white" : "#71717a",
+            }}
+          >
+            Game Posts ({gameTakes.length})
+          </button>
         </div>
 
         {/* Posts tab */}
