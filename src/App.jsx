@@ -12,39 +12,85 @@ export default function App() {
   const [page, setPage] = useState("feed");
 
   const fetchUsername = async (userId) => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("username")
-      .eq("user_id", userId)
-      .maybeSingle();
-    setUsername(data?.username || null);
+    try {
+      const { data } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("user_id", userId)
+        .maybeSingle();
+      return data?.username || null;
+    } catch (err) {
+      console.log("fetch error:", err);
+      return null;
+    }
   };
 
   useEffect(() => {
-    const loadSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      setSession(session);
-      if (session) await fetchUsername(session.user.id);
+    const timeout = setTimeout(() => setLoading(false), 3000);
+
+    const init = async () => {
+      try {
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
+
+        if (error || !session) {
+          // Clear any stale session data
+          await supabase.auth.signOut();
+          setSession(null);
+          setUsername(null);
+          setLoading(false);
+          clearTimeout(timeout);
+          return;
+        }
+
+        // Verify the session is actually valid
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
+
+        if (userError || !user) {
+          await supabase.auth.signOut();
+          setSession(null);
+          setUsername(null);
+          setLoading(false);
+          clearTimeout(timeout);
+          return;
+        }
+
+        setSession(session);
+        const name = await fetchUsername(session.user.id);
+        setUsername(name);
+      } catch (_err) {
+        await supabase.auth.signOut();
+        setSession(null);
+        setUsername(null);
+      }
+
+      clearTimeout(timeout);
       setLoading(false);
     };
 
-    loadSession();
+    init();
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       if (session) {
-        await fetchUsername(session.user.id);
+        const name = await fetchUsername(session.user.id);
+        setUsername(name);
       } else {
         setUsername(null);
       }
-      setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeout);
+    };
   }, []);
 
   if (loading)
@@ -58,6 +104,18 @@ export default function App() {
   if (!username)
     return <UsernameSetup user={session.user} onComplete={setUsername} />;
   if (page === "profile")
-    return <Profile username={username} onBack={() => setPage("feed")} />;
-  return <Feed username={username} onProfileClick={() => setPage("profile")} />;
+    return (
+      <Profile
+        username={username}
+        user={session.user}
+        onBack={() => setPage("feed")}
+      />
+    );
+  return (
+    <Feed
+      username={username}
+      user={session.user}
+      onProfileClick={() => setPage("profile")}
+    />
+  );
 }

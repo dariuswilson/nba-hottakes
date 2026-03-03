@@ -34,7 +34,7 @@ const NBA_TEAMS = [
   { name: "Washington Wizards", abbr: "WAS" },
 ];
 
-export default function Profile({ username, onBack }) {
+export default function Profile({ username, user, onBack }) {
   const [profile, setProfile] = useState(null);
   const [takes, setTakes] = useState([]);
   const [editing, setEditing] = useState(false);
@@ -42,29 +42,31 @@ export default function Profile({ username, onBack }) {
   const [favoriteTeam, setFavoriteTeam] = useState("");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [user, setUser] = useState(null);
+  const [badges, setBadges] = useState([]);
 
   const fetchProfile = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    setUser(user);
+    if (!user) return;
 
-    const { data } = await supabase
+    const { data: profileData } = await supabase
       .from("profiles")
       .select("*")
       .eq("user_id", user.id)
       .single();
 
-    setProfile(data);
-    setBio(data?.bio || "");
-    setFavoriteTeam(data?.favorite_team || "");
+    setProfile(profileData);
+    setBio(profileData?.bio || "");
+    setFavoriteTeam(profileData?.favorite_team || "");
+
+    const { data: badgeData } = await supabase
+      .from("user_badges")
+      .select("*")
+      .eq("user_id", user.id);
+
+    setBadges(badgeData || []);
   };
 
   const fetchTakes = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    if (!user) return;
     const { data } = await supabase
       .from("takes")
       .select("*")
@@ -242,6 +244,32 @@ export default function Profile({ username, onBack }) {
               </p>
             </div>
           ))}
+        </div>
+
+        {/* Badges */}
+        <div className="bg-zinc-900 rounded-2xl p-6 mb-6">
+          <h3 className="text-lg font-bold mb-4">🏅 Badges</h3>
+          {badges.length === 0 ? (
+            <p className="text-zinc-500 text-sm">
+              No badges yet — keep being active!
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-3">
+              {badges.map((badge) => (
+                <div
+                  key={badge.id}
+                  className="flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 px-4 py-2 rounded-full"
+                >
+                  <span className="text-lg">🏆</span>
+                  <span className="text-black font-bold text-sm">
+                    {badge.badge_key === "first_100"
+                      ? "First 100"
+                      : badge.badge_key}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

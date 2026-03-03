@@ -1,6 +1,13 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = "https://xtpbzwtzxrcraszxgyjx.supabase.co"; // from General settings
-const supabaseKey = "sb_publishable_3HNzfbfGXQt2Ru8EGuv82Q_WyBTsbpV"; // the publishable key
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: false,
+    storageKey: "nba-hottakes-auth",
+  },
+});

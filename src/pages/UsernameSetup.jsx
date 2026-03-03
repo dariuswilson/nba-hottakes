@@ -1,7 +1,16 @@
 import { useState } from "react";
-import { supabase } from "../supabase";
 import { containsBlockedTerm } from "../utils/blocklist";
-import { moderateContent } from "../utils/moderate";
+import { supabase } from "../supabase";
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+const headers = {
+  apikey: SUPABASE_KEY,
+  Authorization: `Bearer ${SUPABASE_KEY}`,
+  "Content-Type": "application/json",
+  Prefer: "return=minimal",
+};
 
 export default function UsernameSetup({ user, onComplete }) {
   const [username, setUsername] = useState("");
@@ -14,36 +23,75 @@ export default function UsernameSetup({ user, onComplete }) {
       return setError("Username must be at least 3 characters");
     if (!/^[a-zA-Z0-9_]+$/.test(username))
       return setError("Only letters, numbers, and underscores");
-    if (containsBlockedTerm(username)) {
-      return setError("That username is not allowed. Please choose another.");
-    }
-    const allowed = await moderateContent(username);
-    if (!allowed)
+    if (containsBlockedTerm(username))
       return setError("That username is not allowed. Please choose another.");
 
     setLoading(true);
     setError("");
 
-    // Check if username is taken
-    const { data: existing } = await supabase
-      .from("profiles")
-      .select("username")
-      .eq("username", username)
-      .single();
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const authToken = session?.access_token || SUPABASE_KEY;
 
-    if (existing) {
-      setError("Username is already taken!");
-      setLoading(false);
-      return;
+      const authHeaders = {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${authToken}`,
+        "Content-Type": "application/json",
+        Prefer: "return=minimal",
+      };
+
+      // Check if username exists
+      const checkRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/profiles?select=username&username=eq.${username}`,
+        { headers: authHeaders },
+      );
+      const existing = await checkRes.json();
+      if (existing.length > 0) {
+        setError("Username is already taken!");
+        setLoading(false);
+        return;
+      }
+
+      // Insert profile
+      const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
+        method: "POST",
+        headers: authHeaders,
+        body: JSON.stringify({ user_id: user.id, username }),
+      });
+
+      console.log("insert status:", insertRes.status);
+      const insertBody = await insertRes.clone().text();
+      console.log("insert body:", insertBody);
+
+      if (!insertRes.ok) {
+        const err = JSON.parse(insertBody);
+        setError(err.message || "Something went wrong");
+        setLoading(false);
+        return;
+      }
+
+      // Award first 100 badge
+      const countRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/profiles?select=count`,
+        { headers: { ...authHeaders, Prefer: "count=exact" } },
+      );
+      const countData = await countRes.json();
+      const count = countData?.[0]?.count || 0;
+
+      if (count <= 100) {
+        await fetch(`${SUPABASE_URL}/rest/v1/user_badges`, {
+          method: "POST",
+          headers: authHeaders,
+          body: JSON.stringify({ user_id: user.id, badge_key: "first_100" }),
+        });
+      }
+
+      onComplete(username);
+    } catch (_err) {
+      setError("Something went wrong, please try again");
     }
-
-    const { error } = await supabase.from("profiles").insert({
-      user_id: user.id,
-      username,
-    });
-
-    if (error) setError(error.message);
-    else onComplete(username);
 
     setLoading(false);
   };
@@ -63,6 +111,7 @@ export default function UsernameSetup({ user, onComplete }) {
             placeholder="yourname"
             value={username}
             onChange={(e) => setUsername(e.target.value.toLowerCase())}
+            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
             className="flex-1 bg-transparent text-white p-3 outline-none"
           />
         </div>

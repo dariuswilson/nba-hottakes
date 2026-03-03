@@ -4,10 +4,9 @@ import { moderateContent } from "../utils/moderate";
 
 const EMOJIS = ["🔥", "💀", "🐐", "😂", "👀"];
 
-export default function Feed({ username, onProfileClick }) {
+export default function Feed({ username, user, onProfileClick }) {
   const [takes, setTakes] = useState([]);
   const [newTake, setNewTake] = useState("");
-  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [reactions, setReactions] = useState({});
   const [comments, setComments] = useState({});
@@ -16,10 +15,11 @@ export default function Feed({ username, onProfileClick }) {
   const [error, setError] = useState("");
 
   const fetchTakes = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("takes")
-      .select("*, profiles(avatar_url)")
+      .select("*")
       .order("created_at", { ascending: false });
+    console.log("takes:", data, "error:", error);
     setTakes(data || []);
   };
 
@@ -49,10 +49,6 @@ export default function Feed({ username, onProfileClick }) {
 
   useEffect(() => {
     const loadData = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user);
       await fetchTakes();
       await fetchReactions();
       await fetchComments();
