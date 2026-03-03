@@ -17,7 +17,7 @@ export default function Feed({ username, user, onProfileClick }) {
   const fetchTakes = async () => {
     const { data, error } = await supabase
       .from("takes")
-      .select("*")
+      .select("*, profiles(avatar_url)")
       .order("created_at", { ascending: false });
     console.log("takes:", data, "error:", error);
     setTakes(data || []);
@@ -37,7 +37,7 @@ export default function Feed({ username, user, onProfileClick }) {
   const fetchComments = async () => {
     const { data } = await supabase
       .from("comments")
-      .select("*")
+      .select("*, profiles(avatar_url)")
       .order("created_at", { ascending: true });
     const grouped = {};
     data?.forEach((c) => {
@@ -197,7 +197,7 @@ export default function Feed({ username, user, onProfileClick }) {
           {takes.map((take) => (
             <div key={take.id} className="bg-zinc-900 rounded-2xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-sm font-bold overflow-hidden">
+                <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center text-xs font-bold flex-shrink-0 overflow-hidden">
                   {take.profiles?.avatar_url ? (
                     <img
                       src={take.profiles.avatar_url}
@@ -261,8 +261,16 @@ export default function Feed({ username, user, onProfileClick }) {
                 <div className="mt-3 border-t border-zinc-800 pt-3 space-y-3">
                   {comments[take.id]?.map((c) => (
                     <div key={c.id} className="flex gap-2 items-start">
-                      <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center text-xs font-bold flex-shrink-0">
-                        {c.username?.[0]?.toUpperCase()}
+                      <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center text-xs font-bold flex-shrink-0 overflow-hidden">
+                        {c.profiles?.avatar_url ? (
+                          <img
+                            src={c.profiles.avatar_url}
+                            alt="avatar"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          c.username?.[0]?.toUpperCase()
+                        )}
                       </div>
                       <div className="flex-1">
                         <span className="text-zinc-400 text-xs">

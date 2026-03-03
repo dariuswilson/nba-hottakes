@@ -8,6 +8,6 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: false,
-    storageKey: "nba-hottakes-auth",
+    storageKey: "nba-hottakes-auth-v2",
   },
 });

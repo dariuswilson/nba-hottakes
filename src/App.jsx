@@ -29,7 +29,19 @@ export default function App() {
       return null;
     }
   };
-
+  // const fetchUsername = async (userId) => {
+  //   try {
+  //     const { data } = await supabase
+  //       .from("profiles")
+  //       .select("username")
+  //       .eq("user_id", userId)
+  //       .maybeSingle();
+  //     return data?.username || null;
+  //   } catch (err) {
+  //     console.log("fetch error:", err);
+  //     return null;
+  //   }
+  // };
   useEffect(() => {
     const timeout = setTimeout(() => setLoading(false), 3000);
 
