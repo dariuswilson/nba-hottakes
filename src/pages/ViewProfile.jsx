@@ -36,104 +36,60 @@ const NBA_TEAMS = [
 
 const POSTS_PER_PAGE = 10;
 
-export default function Profile({ username, user, onBack }) {
+export default function ViewProfile({ username, onBack }) {
   const [profile, setProfile] = useState(null);
   const [takes, setTakes] = useState([]);
   const [comments, setComments] = useState([]);
-  const [editing, setEditing] = useState(false);
-  const [bio, setBio] = useState("");
-  const [favoriteTeam, setFavoriteTeam] = useState("");
-  const [uploading, setUploading] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [badges, setBadges] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("posts");
   const [visiblePosts, setVisiblePosts] = useState(POSTS_PER_PAGE);
   const [visibleComments, setVisibleComments] = useState(POSTS_PER_PAGE);
 
-  const fetchProfile = async () => {
-    if (!user) return;
-
-    const { data: profileData } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("user_id", user.id)
-      .single();
-
-    setProfile(profileData);
-    setBio(profileData?.bio || "");
-    setFavoriteTeam(profileData?.favorite_team || "");
-
-    const { data: badgeData } = await supabase
-      .from("user_badges")
-      .select("*")
-      .eq("user_id", user.id);
-
-    setBadges(badgeData || []);
-  };
-
-  const fetchTakes = async () => {
-    if (!user) return;
-    const { data } = await supabase
-      .from("takes")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
-    setTakes(data || []);
-  };
-
-  const fetchComments = async () => {
-    if (!user) return;
-    const { data } = await supabase
-      .from("comments")
-      .select("*, takes(content)")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
-    setComments(data || []);
-  };
-
   useEffect(() => {
     const loadData = async () => {
-      await fetchProfile();
-      await fetchTakes();
-      await fetchComments();
-    };
-    loadData();
-  }, []);
-
-  const handleAvatarUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setUploading(true);
-
-    const fileExt = file.name.split(".").pop();
-    const filePath = `${user.id}/avatar.${fileExt}`;
-
-    const { error } = await supabase.storage
-      .from("avatars")
-      .upload(filePath, file, { upsert: true });
-
-    if (!error) {
-      const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
-      await supabase
+      const { data: profileData } = await supabase
         .from("profiles")
-        .update({ avatar_url: data.publicUrl })
-        .eq("user_id", user.id);
-      fetchProfile();
-    }
+        .select("*")
+        .eq("username", username)
+        .single();
 
-    setUploading(false);
-  };
+      setProfile(profileData);
 
-  const saveProfile = async () => {
-    setSaving(true);
-    await supabase
-      .from("profiles")
-      .update({ bio, favorite_team: favoriteTeam })
-      .eq("user_id", user.id);
-    await fetchProfile();
-    setEditing(false);
-    setSaving(false);
-  };
+      if (profileData) {
+        const { data: takesData } = await supabase
+          .from("takes")
+          .select("*")
+          .eq("user_id", profileData.user_id)
+          .order("created_at", { ascending: false });
+        setTakes(takesData || []);
+
+        const { data: commentsData } = await supabase
+          .from("comments")
+          .select("*, takes(content)")
+          .eq("user_id", profileData.user_id)
+          .order("created_at", { ascending: false });
+        setComments(commentsData || []);
+
+        const { data: badgeData } = await supabase
+          .from("user_badges")
+          .select("*")
+          .eq("user_id", profileData.user_id);
+        setBadges(badgeData || []);
+      }
+
+      setLoading(false);
+    };
+
+    loadData();
+  }, [username]);
+
+  if (loading)
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        <p className="text-orange-500 text-xl">🏀 Loading...</p>
+      </div>
+    );
 
   const visibleTakes = takes.slice(0, visiblePosts);
   const visibleCommentsList = comments.slice(0, visibleComments);
@@ -171,42 +127,17 @@ export default function Profile({ username, user, onBack }) {
           <div className="p-6 pt-0">
             {/* Avatar row */}
             <div className="flex items-end justify-between -mt-10 mb-4">
-              <div className="relative">
-                <div className="w-20 h-20 rounded-full border-4 border-zinc-950 bg-orange-500 flex items-center justify-center text-2xl font-bold overflow-hidden">
-                  {profile?.avatar_url ? (
-                    <img
-                      src={profile.avatar_url}
-                      alt="avatar"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    username?.[0]?.toUpperCase()
-                  )}
-                </div>
-                <label className="absolute bottom-0 right-0 bg-zinc-700 hover:bg-orange-500 rounded-full w-7 h-7 flex items-center justify-center cursor-pointer transition border-2 border-zinc-950">
-                  <span className="text-xs">✎</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarUpload}
-                    className="hidden"
+              <div className="w-20 h-20 rounded-full border-4 border-zinc-950 bg-orange-500 flex items-center justify-center text-2xl font-bold overflow-hidden">
+                {profile?.avatar_url ? (
+                  <img
+                    src={profile.avatar_url}
+                    alt="avatar"
+                    className="w-full h-full object-cover"
                   />
-                </label>
+                ) : (
+                  username?.[0]?.toUpperCase()
+                )}
               </div>
-
-              <button
-                onClick={() => setEditing(!editing)}
-                className="px-4 py-2 rounded-full text-sm font-medium transition"
-                style={{
-                  background: editing
-                    ? "rgba(249,115,22,0.2)"
-                    : "rgba(255,255,255,0.08)",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  color: editing ? "#f97316" : "white",
-                }}
-              >
-                {editing ? "Cancel" : "Edit Profile"}
-              </button>
             </div>
 
             {/* Name & team */}
@@ -231,81 +162,27 @@ export default function Profile({ username, user, onBack }) {
             </div>
 
             {/* Bio */}
-            {!editing && (
-              <p className="text-zinc-400 text-sm leading-relaxed">
-                {profile?.bio || "No bio yet — click Edit Profile to add one!"}
-              </p>
-            )}
+            <p className="text-zinc-400 text-sm leading-relaxed">
+              {profile?.bio || "No bio yet."}
+            </p>
 
             {/* Stats row */}
-            {!editing && (
-              <div className="flex gap-6 mt-4 pt-4 border-t border-white/5">
-                <div className="text-center">
-                  <p className="text-lg font-bold text-white">{takes.length}</p>
-                  <p className="text-xs text-zinc-500">Posts</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-lg font-bold text-white">
-                    {comments.length}
-                  </p>
-                  <p className="text-xs text-zinc-500">Comments</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-lg font-bold text-white">
-                    {badges.length}
-                  </p>
-                  <p className="text-xs text-zinc-500">Badges</p>
-                </div>
+            <div className="flex gap-6 mt-4 pt-4 border-t border-white/5">
+              <div className="text-center">
+                <p className="text-lg font-bold text-white">{takes.length}</p>
+                <p className="text-xs text-zinc-500">Posts</p>
               </div>
-            )}
-
-            {/* Edit form */}
-            {editing && (
-              <div className="space-y-3 mt-4">
-                <textarea
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  placeholder="Write a bio..."
-                  rows={3}
-                  className="w-full text-white p-3 rounded-xl outline-none text-sm resize-none"
-                  style={{
-                    background: "rgba(255,255,255,0.06)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                  }}
-                />
-                <select
-                  value={favoriteTeam}
-                  onChange={(e) => setFavoriteTeam(e.target.value)}
-                  className="w-full text-white p-3 rounded-xl outline-none text-sm"
-                  style={{
-                    background: "rgba(255,255,255,0.06)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                  }}
-                >
-                  <option value="">Select your favorite team</option>
-                  {NBA_TEAMS.map((team) => (
-                    <option
-                      key={team.abbr}
-                      value={team.abbr}
-                      style={{ background: "#1c1c1e" }}
-                    >
-                      {team.name}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  onClick={saveProfile}
-                  disabled={saving}
-                  className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-white font-bold py-3 rounded-xl transition"
-                >
-                  {saving ? "Saving..." : "Save Profile"}
-                </button>
+              <div className="text-center">
+                <p className="text-lg font-bold text-white">
+                  {comments.length}
+                </p>
+                <p className="text-xs text-zinc-500">Comments</p>
               </div>
-            )}
-
-            {uploading && (
-              <p className="text-zinc-400 text-sm mt-2">Uploading picture...</p>
-            )}
+              <div className="text-center">
+                <p className="text-lg font-bold text-white">{badges.length}</p>
+                <p className="text-xs text-zinc-500">Badges</p>
+              </div>
+            </div>
           </div>
         </div>
 

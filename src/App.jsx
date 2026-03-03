@@ -4,12 +4,14 @@ import Login from "./pages/Login";
 import Feed from "./pages/Feed";
 import UsernameSetup from "./pages/UsernameSetup";
 import Profile from "./pages/Profile";
+import ViewProfile from "./pages/ViewProfile";
 
 export default function App() {
   const [session, setSession] = useState(null);
   const [username, setUsername] = useState(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState("feed");
+  const [viewingUsername, setViewingUsername] = useState(null);
 
   const fetchUsername = async (userId) => {
     try {
@@ -108,11 +110,23 @@ export default function App() {
         onBack={() => setPage("feed")}
       />
     );
+  if (page === "viewProfile")
+    return (
+      <ViewProfile
+        username={viewingUsername}
+        currentUser={session.user}
+        onBack={() => setPage("feed")}
+      />
+    );
   return (
     <Feed
       username={username}
       user={session.user}
       onProfileClick={() => setPage("profile")}
+      onViewProfile={(u) => {
+        setViewingUsername(u);
+        setPage("viewProfile");
+      }}
     />
   );
 }

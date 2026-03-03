@@ -4,14 +4,19 @@ import { moderateContent } from "../utils/moderate";
 
 const EMOJIS = ["🔥", "💀", "🐐", "😂", "👀"];
 
-export default function Feed({ username, user, onProfileClick }) {
+export default function Feed({
+  username,
+  user,
+  onProfileClick,
+  onViewProfile,
+}) {
   const [takes, setTakes] = useState([]);
   const [newTake, setNewTake] = useState("");
   const [loading, setLoading] = useState(false);
   const [reactions, setReactions] = useState({});
   const [comments, setComments] = useState({});
   const [openComments, setOpenComments] = useState(null);
-  const [newComment, setNewComment] = useState("");
+  const [newComment, setNewComment] = useState({});
   const [error, setError] = useState("");
 
   const fetchTakes = async () => {
@@ -126,20 +131,29 @@ export default function Feed({ username, user, onProfileClick }) {
   };
 
   const postComment = async (takeId) => {
-    if (!newComment.trim()) return;
+    const content = newComment[takeId]?.trim();
+    if (!content) return;
+    console.log("posting comment:", content);
 
-    const allowed = await moderateContent(newComment);
-    if (!allowed) {
-      setError("Your comment contains inappropriate content.");
-      return;
+    try {
+      const allowed = await moderateContent(content);
+      console.log("moderation result:", allowed);
+      if (!allowed) {
+        setError("Your comment contains inappropriate content.");
+        return;
+      }
+    } catch (err) {
+      console.log("moderation error:", err);
     }
-    await supabase.from("comments").insert({
+
+    const { data, error } = await supabase.from("comments").insert({
       take_id: takeId,
       user_id: user.id,
       username: username,
-      content: newComment,
+      content,
     });
-    setNewComment("");
+    console.log("insert result:", data, error);
+    setNewComment((prev) => ({ ...prev, [takeId]: "" }));
     await fetchComments();
   };
 
@@ -197,7 +211,10 @@ export default function Feed({ username, user, onProfileClick }) {
           {takes.map((take) => (
             <div key={take.id} className="bg-zinc-900 rounded-2xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center text-xs font-bold flex-shrink-0 overflow-hidden">
+                <div
+                  onClick={() => onViewProfile(take.username)}
+                  className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-sm font-bold overflow-hidden cursor-pointer"
+                >
                   {take.profiles?.avatar_url ? (
                     <img
                       src={take.profiles.avatar_url}
@@ -208,7 +225,12 @@ export default function Feed({ username, user, onProfileClick }) {
                     take.username?.[0]?.toUpperCase()
                   )}
                 </div>
-                <span className="text-zinc-400 text-sm">@{take.username}</span>
+                <span
+                  onClick={() => onViewProfile(take.username)}
+                  className="text-zinc-400 text-sm cursor-pointer hover:text-white transition"
+                >
+                  @{take.username}
+                </span>
                 <span className="text-zinc-600 text-xs ml-auto">
                   {new Date(take.created_at).toLocaleDateString()}
                 </span>
@@ -273,7 +295,10 @@ export default function Feed({ username, user, onProfileClick }) {
                         )}
                       </div>
                       <div className="flex-1">
-                        <span className="text-zinc-400 text-xs">
+                        <span
+                          onClick={() => onViewProfile(c.username)}
+                          className="text-zinc-400 text-xs cursor-pointer hover:text-white transition"
+                        >
                           @{c.username}{" "}
                         </span>
                         <span className="text-white text-sm">{c.content}</span>
@@ -292,8 +317,13 @@ export default function Feed({ username, user, onProfileClick }) {
                   <div className="flex gap-2 mt-2">
                     <input
                       type="text"
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
+                      value={newComment[take.id] || ""}
+                      onChange={(e) =>
+                        setNewComment((prev) => ({
+                          ...prev,
+                          [take.id]: e.target.value,
+                        }))
+                      }
                       onKeyDown={(e) =>
                         e.key === "Enter" && postComment(take.id)
                       }
