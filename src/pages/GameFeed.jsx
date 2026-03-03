@@ -130,14 +130,12 @@ export default function GameFeed({
     } catch {
       /* continue */
     }
-    await supabase
-      .from("game_takes")
-      .insert({
-        game_id: game.id,
-        content: newPost,
-        user_id: user.id,
-        username,
-      });
+    await supabase.from("game_takes").insert({
+      game_id: game.id,
+      content: newPost,
+      user_id: user.id,
+      username,
+    });
     setNewPost("");
     await fetchPosts();
     setLoading(false);
@@ -206,16 +204,22 @@ export default function GameFeed({
         >
           <div className="px-6 pt-5 pb-2 flex items-center justify-center">
             {isLive && (
-              <div
-                className="flex items-center gap-2 px-3 py-1 rounded-full"
-                style={{
-                  background: "rgba(239,68,68,0.15)",
-                  border: "1px solid rgba(239,68,68,0.3)",
-                }}
-              >
-                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                <span className="text-red-400 text-xs font-bold uppercase tracking-wider">
-                  Live
+              <div className="flex items-center justify-center gap-3">
+                <div
+                  className="flex items-center gap-2 px-3 py-1 rounded-full"
+                  style={{
+                    background: "rgba(239,68,68,0.15)",
+                    border: "1px solid rgba(239,68,68,0.3)",
+                  }}
+                >
+                  <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                  <span className="text-red-400 text-xs font-bold uppercase tracking-wider">
+                    Live
+                  </span>
+                </div>
+                <span className="text-zinc-400 text-sm">
+                  {game.period > 4 ? `OT${game.period - 4}` : `Q${game.period}`}{" "}
+                  · {game.clock}
                 </span>
               </div>
             )}

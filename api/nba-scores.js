@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Cache-Control", "s-maxage=30");
+  res.setHeader("Cache-Control", "s-maxage=20");
 
   try {
     const response = await fetch(
@@ -15,6 +15,9 @@ export default async function handler(req, res) {
         const home = comp.competitors.find((t) => t.homeAway === "home");
         const away = comp.competitors.find((t) => t.homeAway === "away");
         const status = event.status.type.name;
+        const statusDetail = event.status.type.shortDetail || "";
+        const clock = event.status.displayClock;
+        const period = event.status.period;
 
         return {
           id: event.id,
@@ -41,8 +44,9 @@ export default async function handler(req, res) {
             [home.team.abbreviation]: parseInt(home.score) || 0,
             [away.team.abbreviation]: parseInt(away.score) || 0,
           },
-          clock: event.status.displayClock,
-          period: event.status.period,
+          clock,
+          period,
+          statusDetail,
         };
       }) || [];
 

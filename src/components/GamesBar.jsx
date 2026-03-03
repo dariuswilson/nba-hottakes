@@ -125,6 +125,20 @@ function GameCard({ game, onClick }) {
             })}
           </span>
         )}
+        {isLive && (
+          <div className="flex items-center justify-between w-full mb-3">
+            <div className="flex items-center gap-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+              <span className="text-red-400 text-xs font-bold">LIVE</span>
+            </div>
+            <div className="text-right">
+              <span className="text-zinc-400 text-xs">
+                {game.period > 4 ? `OT${game.period - 4}` : `Q${game.period}`} ·{" "}
+                {game.clock}
+              </span>
+            </div>
+          </div>
+        )}
         {isClosed && <span className="text-zinc-600 text-xs">Final</span>}
       </div>
 
