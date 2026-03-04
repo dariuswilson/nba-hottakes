@@ -7,6 +7,7 @@ import Profile from "./pages/Profile";
 import ViewProfile from "./pages/ViewProfile";
 import GameFeed from "./pages/GameFeed";
 import Messages from "./pages/Messages";
+import TransactionsModal from "./pages/TransactionsModal";
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -18,6 +19,7 @@ export default function App() {
   const [viewingGame, setViewingGame] = useState(null);
   const [userBucks, setUserBucks] = useState(0);
   const [activeConvo, setActiveConvo] = useState(null);
+  const [showTransactions, setShowTransactions] = useState(false);
 
   const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
   const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -124,95 +126,119 @@ export default function App() {
   if (!session) return <Login />;
   if (!username)
     return <UsernameSetup user={session.user} onComplete={setUsername} />;
-  if (page === "profile")
-    return (
-      <Profile
-        username={username}
-        user={session.user}
-        isModerator={isModerator}
-        userBucks={userBucks}
-        onBack={() => setPage("feed")}
-        onProfileClick={() => setPage("profile")}
-        onViewProfile={(u) => {
-          setViewingUsername(u);
-          setPage("viewProfile");
-        }}
-        onMessagesClick={() => setPage("messages")}
-      />
-    );
-  if (page === "viewProfile")
-    return (
-      <ViewProfile
-        username={viewingUsername}
-        currentUser={session.user}
-        currentUsername={username}
-        currentUserBucks={userBucks}
-        isModerator={isModerator}
-        onBack={() => setPage("feed")}
-        onProfileClick={() => setPage("profile")}
-        onViewProfile={(u) => {
-          setViewingUsername(u);
-          setPage("viewProfile");
-        }}
-        onDM={(target) => {
-          setActiveConvo(target);
-          setPage("messages");
-        }}
-        onMessagesClick={() => setPage("messages")}
-      />
-    );
-  if (page === "gameFeed")
-    return (
-      <GameFeed
-        game={viewingGame}
-        user={session.user}
-        username={username}
-        userBucks={userBucks}
-        onBucksUpdate={setUserBucks}
-        onProfileClick={() => setPage("profile")}
-        onLogout={() => supabase.auth.signOut()}
-        onBack={() => setPage("feed")}
-        onViewProfile={(u) => {
-          setViewingUsername(u);
-          setPage("viewProfile");
-        }}
-        onMessagesClick={() => setPage("messages")}
-      />
-    );
-  if (page === "messages")
-    return (
-      <Messages
-        user={session.user}
-        username={username}
-        userBucks={userBucks}
-        initialConvo={activeConvo}
-        onProfileClick={() => setPage("profile")}
-        onLogout={() => supabase.auth.signOut()}
-        onMessagesClick={() => setPage("messages")}
-        onViewProfile={(u) => {
-          setViewingUsername(u);
-          setPage("viewProfile");
-        }}
-        onBack={() => setPage("feed")}
-      />
-    );
+
+  // const sharedNavProps = {
+  //   onBucksClick: () => setShowTransactions(true),
+  // };
+
   return (
-    <Feed
-      username={username}
-      user={session.user}
-      isModerator={isModerator}
-      userBucks={userBucks}
-      onBucksUpdate={setUserBucks}
-      onProfileClick={() => setPage("profile")}
-      onViewProfile={(u) => {
-        setViewingUsername(u);
-        setPage("viewProfile");
-      }}
-      onGameClick={(g) => {
-        setViewingGame(g);
-        setPage("gameFeed");
-      }}
-      onMessagesClick={() => setPage("messages")}
-    />
+    <>
+      {/* Global transactions modal - works on any page */}
+      {showTransactions && (
+        <TransactionsModal
+          userId={session.user.id}
+          username={username}
+          onClose={() => setShowTransactions(false)}
+          onBucksUpdate={(newBalance) => setUserBucks(newBalance)}
+        />
+      )}
+
+      {page === "profile" && (
+        <Profile
+          username={username}
+          user={session.user}
+          isModerator={isModerator}
+          userBucks={userBucks}
+          onBack={() => setPage("feed")}
+          onProfileClick={() => setPage("profile")}
+          onViewProfile={(u) => {
+            setViewingUsername(u);
+            setPage("viewProfile");
+          }}
+          onMessagesClick={() => setPage("messages")}
+          onBucksClick={() => setShowTransactions(true)}
+        />
+      )}
+
+      {page === "viewProfile" && (
+        <ViewProfile
+          username={viewingUsername}
+          currentUser={session.user}
+          currentUsername={username}
+          currentUserBucks={userBucks}
+          isModerator={isModerator}
+          onBack={() => setPage("feed")}
+          onProfileClick={() => setPage("profile")}
+          onViewProfile={(u) => {
+            setViewingUsername(u);
+            setPage("viewProfile");
+          }}
+          onDM={(target) => {
+            setActiveConvo(target);
+            setPage("messages");
+          }}
+          onMessagesClick={() => setPage("messages")}
+          onBucksClick={() => setShowTransactions(true)}
+        />
+      )}
+
+      {page === "gameFeed" && (
+        <GameFeed
+          game={viewingGame}
+          user={session.user}
+          username={username}
+          userBucks={userBucks}
+          onBucksUpdate={setUserBucks}
+          onProfileClick={() => setPage("profile")}
+          onLogout={() => supabase.auth.signOut()}
+          onBack={() => setPage("feed")}
+          onViewProfile={(u) => {
+            setViewingUsername(u);
+            setPage("viewProfile");
+          }}
+          onMessagesClick={() => setPage("messages")}
+          onBucksClick={() => setShowTransactions(true)}
+        />
+      )}
+
+      {page === "messages" && (
+        <Messages
+          user={session.user}
+          username={username}
+          userBucks={userBucks}
+          initialConvo={activeConvo}
+          onProfileClick={() => setPage("profile")}
+          onLogout={() => supabase.auth.signOut()}
+          onMessagesClick={() => setPage("messages")}
+          onViewProfile={(u) => {
+            setViewingUsername(u);
+            setPage("viewProfile");
+          }}
+          onBack={() => setPage("feed")}
+          onBucksClick={() => setShowTransactions(true)}
+        />
+      )}
+
+      {page === "feed" && (
+        <Feed
+          username={username}
+          user={session.user}
+          isModerator={isModerator}
+          userBucks={userBucks}
+          onBucksUpdate={setUserBucks}
+          onProfileClick={() => setPage("profile")}
+          onViewProfile={(u) => {
+            setViewingUsername(u);
+            setPage("viewProfile");
+          }}
+          onGameClick={(g) => {
+            setViewingGame(g);
+            setPage("gameFeed");
+          }}
+          onMessagesClick={() => setPage("messages")}
+          onBucksClick={() => setShowTransactions(true)}
+        />
+      )}
+    </>
   );
 }

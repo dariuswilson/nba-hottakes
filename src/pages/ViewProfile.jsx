@@ -49,6 +49,7 @@ export default function ViewProfile({
   onDM,
   onMessagesClick,
   onProfileClick,
+  onBucksClick,
 }) {
   const [profile, setProfile] = useState(null);
   const [takes, setTakes] = useState([]);
@@ -175,6 +176,7 @@ export default function ViewProfile({
         onViewProfile={(u) => onViewProfile?.(u)}
         onMessagesClick={onMessagesClick}
         onProfileClick={onProfileClick}
+        onBucksClick={onBucksClick}
       />
       <div className="max-w-2xl mx-auto p-6">
         {/* Back button */}

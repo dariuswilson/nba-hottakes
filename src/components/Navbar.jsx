@@ -9,6 +9,7 @@ export default function Navbar({
   onLogout,
   onViewProfile,
   onMessagesClick,
+  onBucksClick,
 }) {
   const [search, setSearch] = useState("");
   const [results, setResults] = useState([]);
@@ -172,7 +173,8 @@ export default function Navbar({
         <div className="flex items-center gap-1.5 flex-shrink-0">
           {/* Bucks */}
           <div
-            className="flex items-center gap-1 px-2 py-2 rounded-xl text-sm flex-shrink-0"
+            onClick={onBucksClick}
+            className="flex items-center gap-1 px-2 py-2 rounded-xl text-sm flex-shrink-0 cursor-pointer hover:opacity-80 transition"
             style={{
               background: "rgba(255,255,255,0.05)",
               border: "1px solid rgba(255,255,255,0.08)",
