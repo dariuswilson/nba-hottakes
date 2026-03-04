@@ -111,11 +111,6 @@ function GameCard({ game, onClick }) {
       }}
     >
       <div className="flex items-center justify-between mb-3">
-        {isLive && (
-          <div className="flex items-center gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-          </div>
-        )}
         {isScheduled && (
           <span className="text-zinc-500 text-xs">
             {new Date(game.start_time).toLocaleTimeString("en-US", {
