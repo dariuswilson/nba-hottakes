@@ -14,13 +14,18 @@ export default function Navbar({
   const [results, setResults] = useState([]);
   const [showResults, setShowResults] = useState(false);
   const [searching, setSearching] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const searchRef = useRef(null);
+  const profileRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (searchRef.current && !searchRef.current.contains(e.target)) {
         setShowResults(false);
         setSearch("");
+      }
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setShowProfileMenu(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -107,7 +112,6 @@ export default function Navbar({
             )}
           </div>
 
-          {/* Dropdown results */}
           {showResults && (
             <div
               className="absolute top-full left-0 right-0 mt-2 rounded-2xl overflow-hidden z-50"
@@ -193,42 +197,68 @@ export default function Navbar({
             💬
           </button>
 
-          {/* Profile */}
-          <button
-            onClick={onProfileClick}
-            className="flex items-center gap-1.5 px-2 py-2 rounded-xl text-sm font-medium transition cursor-pointer flex-shrink-0"
-            style={{
-              background: "rgba(249,115,22,0.1)",
-              border: "1px solid rgba(249,115,22,0.2)",
-              color: "#f97316",
-            }}
-          >
-            <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center text-xs font-bold text-white overflow-hidden flex-shrink-0">
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt="avatar"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                username?.[0]?.toUpperCase()
-              )}
-            </div>
-            <span className="hidden md:inline text-xs">@{username}</span>
-          </button>
+          {/* Profile dropdown */}
+          <div className="relative flex-shrink-0" ref={profileRef}>
+            <button
+              onClick={() => setShowProfileMenu((v) => !v)}
+              className="flex items-center gap-1.5 px-2 py-2 rounded-xl text-sm font-medium transition cursor-pointer"
+              style={{
+                background: showProfileMenu
+                  ? "rgba(249,115,22,0.2)"
+                  : "rgba(249,115,22,0.1)",
+                border: "1px solid rgba(249,115,22,0.2)",
+                color: "#f97316",
+              }}
+            >
+              <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center text-xs font-bold text-white overflow-hidden flex-shrink-0">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="avatar"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  username?.[0]?.toUpperCase()
+                )}
+              </div>
+              <span className="hidden md:inline text-xs">@{username}</span>
+            </button>
 
-          {/* Sign out - hidden on mobile */}
-          <button
-            onClick={onLogout}
-            className="hidden md:block px-3 py-2 rounded-xl text-sm transition cursor-pointer"
-            style={{
-              background: "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              color: "#71717a",
-            }}
-          >
-            Sign out
-          </button>
+            {/* Dropdown menu */}
+            {showProfileMenu && (
+              <div
+                className="absolute top-full right-0 mt-2 w-44 rounded-2xl overflow-hidden z-50"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #0f0f1a 0%, #151525 100%)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  boxShadow: "0 20px 40px rgba(0,0,0,0.6)",
+                }}
+              >
+                <button
+                  onClick={() => {
+                    setShowProfileMenu(false);
+                    onProfileClick();
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-white hover:bg-white/5 transition cursor-pointer"
+                  style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+                >
+                  <span>👤</span>
+                  <span>View Profile</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setShowProfileMenu(false);
+                    onLogout();
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 transition cursor-pointer"
+                >
+                  <span>🚪</span>
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
