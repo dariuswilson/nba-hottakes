@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../supabase";
+import TransactionsModal from "./TransactionsModal";
 
 const NBA_TEAMS = [
   { name: "Atlanta Hawks", abbr: "ATL" },
@@ -55,6 +56,7 @@ export default function ViewProfile({
   const [isShadowbanned, setIsShadowbanned] = useState(false);
   const [isProfileMod, setIsProfileMod] = useState(false);
   const [gameTakes, setGameTakes] = useState([]);
+  const [showTransactions, setShowTransactions] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -235,6 +237,17 @@ export default function ViewProfile({
               <div className="text-center">
                 <p className="text-lg font-bold text-white">{badges.length}</p>
                 <p className="text-xs text-zinc-500">Badges</p>
+              </div>
+              <div
+                className="text-center cursor-pointer group"
+                onClick={() => setShowTransactions(true)}
+              >
+                <p className="text-lg font-bold text-white group-hover:text-orange-400 transition">
+                  💰{(profile?.nba_bucks ?? 0).toLocaleString()}
+                </p>
+                <p className="text-xs text-zinc-500 group-hover:text-orange-400 transition">
+                  NBA Bucks
+                </p>
               </div>
             </div>
           </div>
@@ -489,18 +502,6 @@ export default function ViewProfile({
           </div>
         )}
 
-        {/* Game Posts */}
-        <button
-          onClick={() => setActiveTab("game")}
-          className="flex-1 py-2 rounded-lg text-sm font-medium transition"
-          style={{
-            background: activeTab === "game" ? "#f97316" : "transparent",
-            color: activeTab === "game" ? "white" : "#71717a",
-          }}
-        >
-          Game Posts ({gameTakes.length})
-        </button>
-
         {activeTab === "game" && (
           <div className="space-y-3">
             {gameTakes.length === 0 && (
@@ -533,6 +534,13 @@ export default function ViewProfile({
               </div>
             ))}
           </div>
+        )}
+        {showTransactions && (
+          <TransactionsModal
+            userId={profile?.user_id}
+            username={username}
+            onClose={() => setShowTransactions(false)}
+          />
         )}
       </div>
     </div>
