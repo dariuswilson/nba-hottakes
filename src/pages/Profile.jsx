@@ -148,6 +148,10 @@ export default function Profile({
   const [visibleComments, setVisibleComments] = useState(POSTS_PER_PAGE);
   const [gameTakes, setGameTakes] = useState([]);
   const [showTransactions, setShowTransactions] = useState(false);
+  const [showDiscordVerify, setShowDiscordVerify] = useState(false);
+  const [discordCode, setDiscordCode] = useState("");
+  const [discordVerifying, setDiscordVerifying] = useState(false);
+  const [discordVerifyMsg, setDiscordVerifyMsg] = useState("");
 
   const fetchProfile = async () => {
     if (!user) return;
@@ -247,6 +251,57 @@ export default function Profile({
 
   const visibleTakes = takes.slice(0, visiblePosts);
   const visibleCommentsList = comments.slice(0, visibleComments);
+
+  {
+    /* Discord Verification */
+  }
+  const verifyDiscord = async () => {
+    if (discordCode.length !== 5) return;
+    setDiscordVerifying(true);
+    setDiscordVerifyMsg("");
+
+    const { data, error } = await supabase
+      .from("discord_verifications")
+      .select("*")
+      .eq("code", discordCode)
+      .eq("used", false)
+      .single();
+
+    if (!data || error) {
+      setDiscordVerifyMsg("❌ Invalid or expired code. Run /verify again!");
+      setDiscordVerifying(false);
+      return;
+    }
+
+    // Check expiry
+    const expires = new Date(data.expires_at);
+    if (new Date() > expires) {
+      setDiscordVerifyMsg("❌ Code expired. Run /verify again!");
+      setDiscordVerifying(false);
+      return;
+    }
+
+    // Save discord info to profile
+    await supabase
+      .from("profiles")
+      .update({
+        discord_id: data.discord_id,
+        discord_username: data.discord_username,
+      })
+      .eq("user_id", user.id);
+
+    // Mark code as used
+    await supabase
+      .from("discord_verifications")
+      .update({ used: true })
+      .eq("id", data.id);
+
+    await fetchProfile();
+    setDiscordVerifyMsg("✅ Discord linked successfully!");
+    setDiscordCode("");
+    setShowDiscordVerify(false);
+    setDiscordVerifying(false);
+  };
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
@@ -482,6 +537,100 @@ export default function Profile({
 
         {/* Moderator Panel - only visible to mods on their own profile */}
         {isModerator && <ModeratorPanel />}
+
+        {/* Discord Verification */}
+        <div
+          className="rounded-2xl p-5 mb-6"
+          style={{
+            background: "linear-gradient(135deg, #0f0f1a 0%, #151525 100%)",
+            border: "1px solid rgba(88,101,242,0.3)",
+          }}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div
+                className="w-9 h-9 rounded-xl flex items-center justify-center text-lg"
+                style={{ background: "rgba(88,101,242,0.2)" }}
+              >
+                <img
+                  src="https://cdn.prod.website-files.com/6257adef93867e50d84d30e2/636e0a6ca814282eca7172c6_icon_clyde_white_RGB.png"
+                  className="w-5 h-5"
+                />
+              </div>
+              <div>
+                <p className="text-white text-sm font-semibold">Discord</p>
+                <p className="text-zinc-500 text-xs">
+                  {profile?.discord_username
+                    ? `@${profile.discord_username} linked ✅`
+                    : "Not linked"}
+                </p>
+              </div>
+            </div>
+            {!profile?.discord_username && (
+              <button
+                onClick={() => setShowDiscordVerify(!showDiscordVerify)}
+                className="px-4 py-2 rounded-xl text-sm font-medium transition cursor-pointer"
+                style={{
+                  background: "rgba(88,101,242,0.15)",
+                  border: "1px solid rgba(88,101,242,0.3)",
+                  color: "#818cf8",
+                }}
+              >
+                {showDiscordVerify ? "Cancel" : "Link Discord"}
+              </button>
+            )}
+          </div>
+
+          {showDiscordVerify && (
+            <div className="mt-4 space-y-3">
+              <p className="text-zinc-400 text-xs">
+                Run <span className="text-indigo-400 font-mono">/verify</span>{" "}
+                in the Discord server to get your 5-digit code, then enter it
+                below.
+              </p>
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  value={discordCode}
+                  onChange={(e) =>
+                    setDiscordCode(
+                      e.target.value.replace(/\D/g, "").slice(0, 5),
+                    )
+                  }
+                  placeholder="Enter 5-digit code"
+                  className="flex-1 text-white text-sm px-4 py-3 rounded-xl outline-none tracking-widest font-mono"
+                  style={{
+                    background: "rgba(255,255,255,0.06)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                  }}
+                />
+                <button
+                  onClick={verifyDiscord}
+                  disabled={discordCode.length !== 5 || discordVerifying}
+                  className="px-5 py-3 rounded-xl text-sm font-bold transition cursor-pointer disabled:opacity-40"
+                  style={{
+                    background: "linear-gradient(135deg, #6366f1, #818cf8)",
+                    color: "white",
+                  }}
+                >
+                  {discordVerifying ? "Verifying..." : "Verify"}
+                </button>
+              </div>
+              {discordVerifyMsg && (
+                <p
+                  className="text-sm"
+                  style={{
+                    color: discordVerifyMsg.startsWith("✅")
+                      ? "#22c55e"
+                      : "#ef4444",
+                  }}
+                >
+                  {discordVerifyMsg}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Tabs */}
         <div
