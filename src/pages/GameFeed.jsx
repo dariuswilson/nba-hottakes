@@ -275,10 +275,17 @@ export default function GameFeed({
                 </div>
                 {game.period && (
                   <span className="text-zinc-400 text-sm">
-                    {game.period > 4
-                      ? `OT${game.period - 4}`
-                      : `Q${game.period}`}{" "}
-                    · {game.clock}
+                    {game.clock === "0:00" ||
+                    game.clock === "00:00" ||
+                    !game.clock
+                      ? game.period === 2
+                        ? "Halftime"
+                        : game.period > 4
+                          ? `OT${game.period - 4}`
+                          : `Q${game.period} End`
+                      : game.period > 4
+                        ? `OT${game.period - 4}`
+                        : `Q${game.period} · ${game.clock}`}
                   </span>
                 )}
               </>

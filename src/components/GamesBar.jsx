@@ -144,11 +144,6 @@ function GameCard({ game, onGameClick, onBet }) {
   const homeOdds = homeWinProb ? calcOdds(homeWinProb) : null;
   const awayOdds = awayWinProb ? calcOdds(awayWinProb) : null;
 
-  const formatOdds = (o) => {
-    if (o === null || o === undefined) return "—";
-    return o > 0 ? `+${o}` : `${o}`;
-  };
-
   return (
     <div
       className="flex-shrink-0 rounded-2xl overflow-hidden"
@@ -168,26 +163,23 @@ function GameCard({ game, onGameClick, onBet }) {
         {/* Status */}
         <div className="flex items-center justify-between mb-3">
           {isLive && (
-            <div className="flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-              <span className="text-red-400 text-xs font-bold">LIVE</span>
-              {game.period && (
-                <span className="text-zinc-500 text-xs">
-                  Q{game.period > 4 ? `OT` : game.period} · {game.clock}
-                </span>
-              )}
+            <div className="flex items-center justify-between w-full mb-3">
+              <div className="flex items-center gap-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                <span className="text-red-400 text-xs font-bold">LIVE</span>
+              </div>
+              <span className="text-zinc-400 text-xs">
+                {game.clock === "0:00" || game.clock === "00:00" || !game.clock
+                  ? game.period === 2
+                    ? "Halftime"
+                    : game.period > 4
+                      ? `OT${game.period - 4}`
+                      : `Q${game.period}`
+                  : game.period > 4
+                    ? `OT${game.period - 4}`
+                    : `Q${game.period} · ${game.clock}`}
+              </span>
             </div>
-          )}
-          {isScheduled && (
-            <span className="text-zinc-500 text-xs">
-              {new Date(game.start_time).toLocaleTimeString("en-US", {
-                hour: "numeric",
-                minute: "2-digit",
-              })}
-            </span>
-          )}
-          {isClosed && (
-            <span className="text-zinc-600 text-xs font-medium">Final</span>
           )}
         </div>
 
@@ -237,7 +229,7 @@ function GameCard({ game, onGameClick, onBet }) {
       </div>
 
       {/* Betting odds row - only show if not closed */}
-      {!isClosed && homeOdds !== null && (
+      {!isClosed && homeWinProb !== null && homeWinProb !== undefined && (
         <div className="px-3 pb-3 flex gap-2">
           <button
             onClick={() => onBet(awayAbbr, awayOdds)}
@@ -245,10 +237,10 @@ function GameCard({ game, onGameClick, onBet }) {
             style={{
               background: "rgba(255,255,255,0.05)",
               border: "1px solid rgba(255,255,255,0.08)",
-              color: awayOdds > 0 ? "#22c55e" : "#f97316",
+              color: awayWinProb < 50 ? "#22c55e" : "#f97316",
             }}
           >
-            {awayAbbr} {formatOdds(awayOdds)}
+            {awayAbbr} {awayWinProb ? `${Math.round(awayWinProb)}%` : "—"}
           </button>
           <button
             onClick={() => onBet(homeAbbr, homeOdds)}
@@ -256,10 +248,10 @@ function GameCard({ game, onGameClick, onBet }) {
             style={{
               background: "rgba(255,255,255,0.05)",
               border: "1px solid rgba(255,255,255,0.08)",
-              color: homeOdds > 0 ? "#22c55e" : "#f97316",
+              color: homeWinProb < 50 ? "#22c55e" : "#f97316",
             }}
           >
-            {homeAbbr} {formatOdds(homeOdds)}
+            {homeAbbr} {homeWinProb ? `${Math.round(homeWinProb)}%` : "—"}
           </button>
         </div>
       )}

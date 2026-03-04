@@ -147,6 +147,10 @@ export default function App() {
         game={viewingGame}
         user={session.user}
         username={username}
+        userBucks={userBucks}
+        onBucksUpdate={setUserBucks}
+        onProfileClick={() => setPage("profile")}
+        onLogout={() => supabase.auth.signOut()}
         onBack={() => setPage("feed")}
         onViewProfile={(u) => {
           setViewingUsername(u);
