@@ -33,10 +33,15 @@ export default function GamesBar({
   const today = new Date().toDateString();
   const tomorrow = new Date(new Date().getTime() + 86400000).toDateString();
 
-  const todayGames = games.filter((g) => {
-    const gameDate = new Date(g.start_time).toDateString();
-    return gameDate === today || gameDate === tomorrow;
-  });
+  const todayGames = games
+    .filter((g) => {
+      const gameDate = new Date(g.start_time).toDateString();
+      return gameDate === today || gameDate === tomorrow;
+    })
+    .sort((a, b) => {
+      const order = { inprogress: 0, scheduled: 1, closed: 2 };
+      return (order[a.status] ?? 1) - (order[b.status] ?? 1);
+    });
 
   const handleBetConfirm = async (amount, odds, payout) => {
     if (!betTarget || !user) return;
