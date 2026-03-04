@@ -179,7 +179,11 @@ function GameCard({ game, onGameClick, onBet }) {
   const { label, isScheduled } = getGameStatus(game);
 
   const showScore = !isScheduled; // show score for live AND final games
-  const showBets = !isClosed;
+  // Don't show bets if no real probability data
+  const hasProbData =
+    homeWinProb && awayWinProb && !(homeWinProb === 50 && awayWinProb === 50);
+
+  const showBets = !isClosed && hasProbData;
 
   return (
     <div

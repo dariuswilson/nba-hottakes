@@ -18,21 +18,32 @@ export default async function handler(req, res) {
         const clock = event.status.displayClock;
         const period = event.status.period;
 
-        // ESPN provides win probability in the competition
-        const winProb = comp.situation?.lastPlay?.probability || null;
+        // Build win probabilities
+        let homeWinPct = null;
+        let awayWinPct = null;
 
-        // Try predictor data
-        const predictor = comp.predictor || null;
-        const homeWinPct =
-          predictor?.homeTeam?.gameProjection ||
-          winProb?.homeWinPercentage * 100 ||
-          null;
-        const awayWinPct =
-          predictor?.awayTeam?.gameProjection ||
-          winProb?.awayWinPercentage * 100 ||
-          null;
+        // 1. Try predictor (available live and close to tipoff)
+        if (comp.predictor) {
+          homeWinPct = comp.predictor.homeTeam?.gameProjection || null;
+          awayWinPct = comp.predictor.awayTeam?.gameProjection || null;
+        }
 
-        // Debug: log status info
+        // 2. Fall back to last play probability if live
+        if (!homeWinPct && comp.situation?.lastPlay?.probability) {
+          const prob = comp.situation.lastPlay.probability;
+          homeWinPct = (prob.homeWinPercentage || 0) * 100;
+          awayWinPct = (prob.awayWinPercentage || 0) * 100;
+        }
+
+        // 3. Fall back to pregame spread odds for scheduled games
+        if (!homeWinPct && comp.odds?.[0]) {
+          const spread = parseFloat(comp.odds[0].spread) || 0;
+          // Each point of spread ~2.8% shift from 50%
+          const spreadProb = 50 + spread * -1 * 2.8;
+          homeWinPct = Math.min(85, Math.max(15, spreadProb));
+          awayWinPct = 100 - homeWinPct;
+        }
+
         console.log(
           event.id,
           home.team.abbreviation,
@@ -48,6 +59,10 @@ export default async function handler(req, res) {
           event.status.type.detail,
           "shortDetail:",
           event.status.type.shortDetail,
+          "homeWinPct:",
+          homeWinPct,
+          "awayWinPct:",
+          awayWinPct,
         );
 
         return {
