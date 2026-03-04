@@ -41,6 +41,8 @@ const POSTS_PER_PAGE = 10;
 export default function ViewProfile({
   username,
   currentUser,
+  currentUsername,
+  currentUserBucks,
   isModerator,
   onBack,
   onViewProfile,
@@ -61,6 +63,7 @@ export default function ViewProfile({
   const [isProfileMod, setIsProfileMod] = useState(false);
   const [gameTakes, setGameTakes] = useState([]);
   const [showTransactions, setShowTransactions] = useState(false);
+  const [currentAvatarUrl, setCurrentAvatarUrl] = useState(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -116,6 +119,19 @@ export default function ViewProfile({
     loadData();
   }, [username]);
 
+  useEffect(() => {
+    const fetchCurrentAvatar = async () => {
+      if (!currentUser) return;
+      const { data } = await supabase
+        .from("profiles")
+        .select("avatar_url")
+        .eq("user_id", currentUser.id)
+        .single();
+      setCurrentAvatarUrl(data?.avatar_url || null);
+    };
+    fetchCurrentAvatar();
+  }, [currentUser]);
+
   const issueStrike = async () => {
     if (!profile) return;
     setIssuingStrike(true);
@@ -149,9 +165,9 @@ export default function ViewProfile({
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
       <Navbar
-        username={username}
-        avatarUrl={profile?.avatar_url}
-        userBucks={profile?.nba_bucks}
+        username={currentUsername}
+        avatarUrl={currentAvatarUrl}
+        userBucks={currentUserBucks}
         onProfileClick={() => {}}
         onLogout={async () => {
           await supabase.auth.signOut();

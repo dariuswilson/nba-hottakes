@@ -144,6 +144,8 @@ export default function App() {
       <ViewProfile
         username={viewingUsername}
         currentUser={session.user}
+        currentUsername={username}
+        currentUserBucks={userBucks}
         isModerator={isModerator}
         onBack={() => setPage("feed")}
         onViewProfile={(u) => {
@@ -204,7 +206,6 @@ export default function App() {
         setViewingUsername(u);
         setPage("viewProfile");
       }}
-      initialConvo={activeConvo}
       onGameClick={(g) => {
         setViewingGame(g);
         setPage("gameFeed");
