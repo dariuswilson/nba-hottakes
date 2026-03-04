@@ -130,6 +130,10 @@ export default function App() {
         isModerator={isModerator}
         userBucks={userBucks}
         onBack={() => setPage("feed")}
+        onViewProfile={(u) => {
+          setViewingUsername(u);
+          setPage("viewProfile");
+        }}
       />
     );
   if (page === "viewProfile")
@@ -139,6 +143,10 @@ export default function App() {
         currentUser={session.user}
         isModerator={isModerator}
         onBack={() => setPage("feed")}
+        onViewProfile={(u) => {
+          setViewingUsername(u);
+          setPage("viewProfile");
+        }}
       />
     );
   if (page === "gameFeed")

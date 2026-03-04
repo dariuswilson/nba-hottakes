@@ -177,6 +177,14 @@ export default function Feed({
   return (
     <div className="min-h-screen text-white" style={{ background: "#080810" }}>
       {/* Top navbar */}
+      <Navbar
+        username={username}
+        avatarUrl={avatarUrl}
+        userBucks={userBucks}
+        onProfileClick={onProfileClick}
+        onLogout={handleLogout}
+        onViewProfile={onViewProfile}
+      />
       <div
         className="sticky top-0 z-50 backdrop-blur-xl border-b"
         style={{

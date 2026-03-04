@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../supabase";
 import TransactionsModal from "./TransactionsModal";
+import Navbar from "../components/Navbar";
 
 const NBA_TEAMS = [
   { name: "Atlanta Hawks", abbr: "ATL" },
@@ -125,7 +126,12 @@ function ModeratorPanel() {
   );
 }
 
-export default function Profile({ username, user, isModerator, onBack }) {
+export default function Profile({
+  username,
+  user,
+  isModerator,
+  onViewProfile,
+}) {
   const [profile, setProfile] = useState(null);
   const [takes, setTakes] = useState([]);
   const [comments, setComments] = useState([]);
@@ -245,12 +251,17 @@ export default function Profile({ username, user, isModerator, onBack }) {
       <div className="max-w-2xl mx-auto p-6">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
-          <button
-            onClick={onBack}
-            className="flex items-center gap-2 text-zinc-400 hover:text-white transition text-sm"
-          >
-            ← Back
-          </button>
+          <Navbar
+            username={username}
+            avatarUrl={profile?.avatar_url}
+            userBucks={profile?.nba_bucks}
+            onProfileClick={() => {}}
+            onLogout={async () => {
+              const { supabase } = await import("../supabase");
+              await supabase.auth.signOut();
+            }}
+            onViewProfile={(u) => onViewProfile?.(u)}
+          />
         </div>
 
         {/* Profile card */}

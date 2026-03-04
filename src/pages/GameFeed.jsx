@@ -232,6 +232,7 @@ export default function GameFeed({
         userBucks={userBucks}
         onProfileClick={onProfileClick}
         onLogout={onLogout}
+        onViewProfile={onViewProfile}
       />
 
       <div className="max-w-2xl mx-auto p-6">

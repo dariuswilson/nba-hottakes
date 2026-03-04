@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../supabase";
 import TransactionsModal from "./TransactionsModal";
+import Navbar from "../components/Navbar";
 
 const NBA_TEAMS = [
   { name: "Atlanta Hawks", abbr: "ATL" },
