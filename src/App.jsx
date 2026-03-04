@@ -15,38 +15,42 @@ export default function App() {
   const [viewingUsername, setViewingUsername] = useState(null);
   const [isModerator, setIsModerator] = useState(false);
   const [viewingGame, setViewingGame] = useState(null);
+  const [userBucks, setUserBucks] = useState(0);
 
-  const fetchUsername = async (userId) => {
+  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+  const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+  const rawHeaders = {
+    apikey: SUPABASE_KEY,
+    Authorization: `Bearer ${SUPABASE_KEY}`,
+  };
+
+  const fetchProfile = async (userId) => {
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/profiles?select=username&user_id=eq.${userId}&limit=1`,
-        {
-          headers: {
-            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          },
-        },
+        `${SUPABASE_URL}/rest/v1/profiles?select=username,nba_bucks&user_id=eq.${userId}&limit=1`,
+        { headers: rawHeaders },
       );
       const data = await res.json();
-      return data?.[0]?.username || null;
-    } catch (err) {
-      console.log("fetch error:", err);
+      return data?.[0] || null;
+    } catch {
       return null;
     }
   };
-  // const fetchUsername = async (userId) => {
-  //   try {
-  //     const { data } = await supabase
-  //       .from("profiles")
-  //       .select("username")
-  //       .eq("user_id", userId)
-  //       .maybeSingle();
-  //     return data?.username || null;
-  //   } catch (err) {
-  //     console.log("fetch error:", err);
-  //     return null;
-  //   }
-  // };
+
+  const fetchModerator = async (userId) => {
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/moderators?select=user_id&user_id=eq.${userId}&limit=1`,
+        { headers: rawHeaders },
+      );
+      const data = await res.json();
+      return data?.length > 0;
+    } catch {
+      return false;
+    }
+  };
+
   useEffect(() => {
     const timeout = setTimeout(() => setLoading(false), 3000);
 
@@ -65,25 +69,15 @@ export default function App() {
         }
 
         setSession(session);
-        const name = await fetchUsername(session.user.id);
-        setUsername(name);
-        try {
-          const res = await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/moderators?select=user_id&user_id=eq.${session.user.id}&limit=1`,
-            {
-              headers: {
-                apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-                Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-              },
-            },
-          );
-          const modData = await res.json();
-          setIsModerator(modData?.length > 0);
-        } catch {
-          setIsModerator(false);
-        }
-      } catch (_err) {
-        console.log("init error:", _err);
+
+        const profile = await fetchProfile(session.user.id);
+        setUsername(profile?.username || null);
+        setUserBucks(profile?.nba_bucks ?? 500);
+
+        const isMod = await fetchModerator(session.user.id);
+        setIsModerator(isMod);
+      } catch (err) {
+        console.log("init error:", err);
       }
 
       clearTimeout(timeout);
@@ -97,26 +91,15 @@ export default function App() {
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       if (session) {
-        const name = await fetchUsername(session.user.id);
-        setUsername(name);
-        try {
-          const res = await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/moderators?select=user_id&user_id=eq.${session.user.id}&limit=1`,
-            {
-              headers: {
-                apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-                Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-              },
-            },
-          );
-          const modData = await res.json();
-          setIsModerator(modData?.length > 0);
-        } catch {
-          setIsModerator(false);
-        }
+        const profile = await fetchProfile(session.user.id);
+        setUsername(profile?.username || null);
+        setUserBucks(profile?.nba_bucks ?? 500);
+        const isMod = await fetchModerator(session.user.id);
+        setIsModerator(isMod);
       } else {
         setUsername(null);
         setIsModerator(false);
+        setUserBucks(0);
       }
     });
 
@@ -128,7 +111,10 @@ export default function App() {
 
   if (loading)
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: "#080810" }}
+      >
         <p className="text-orange-500 text-xl">🏀 Loading...</p>
       </div>
     );
@@ -142,6 +128,7 @@ export default function App() {
         username={username}
         user={session.user}
         isModerator={isModerator}
+        userBucks={userBucks}
         onBack={() => setPage("feed")}
       />
     );
@@ -172,6 +159,8 @@ export default function App() {
       username={username}
       user={session.user}
       isModerator={isModerator}
+      userBucks={userBucks}
+      onBucksUpdate={setUserBucks}
       onProfileClick={() => setPage("profile")}
       onViewProfile={(u) => {
         setViewingUsername(u);

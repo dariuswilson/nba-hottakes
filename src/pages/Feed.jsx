@@ -11,6 +11,8 @@ export default function Feed({
   onProfileClick,
   onViewProfile,
   onGameClick,
+  userBucks,
+  onBucksUpdate,
 }) {
   const [takes, setTakes] = useState([]);
   const [newTake, setNewTake] = useState("");
@@ -212,6 +214,21 @@ export default function Feed({
 
           {/* Right side */}
           <div className="flex items-center gap-2">
+            <div
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm"
+              style={{
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}
+            >
+              <span>💰</span>
+              <span className="text-white font-bold">
+                {userBucks?.toLocaleString()}
+              </span>
+              <span className="text-zinc-500 text-xs hidden sm:inline">
+                NBA Bucks
+              </span>
+            </div>
             <button
               onClick={onProfileClick}
               className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition cursor-pointer"
@@ -251,7 +268,12 @@ export default function Feed({
 
       <div className="max-w-2xl mx-auto px-6 py-6">
         {/* Games bar */}
-        <GamesBar onGameClick={onGameClick} />
+        <GamesBar
+          onGameClick={onGameClick}
+          user={user}
+          userBucks={userBucks}
+          onBucksUpdate={onBucksUpdate}
+        />
 
         {/* Compose box */}
         <div
