@@ -83,12 +83,25 @@ export default function App() {
         }
 
         setSession(session);
+
         const profile = await fetchProfile(session.user.id);
         setUsername(profile?.username || null);
         setUserBucks(profile?.nba_bucks ?? 500);
+
         const isMod = await fetchModerator(session.user.id);
         setIsModerator(isMod);
+
         await fetchUnreadCount(session.user.id);
+
+        // eslint-disable-next-line no-unused-vars
+        const msgChannel = supabase
+          .channel("unread-count")
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "messages" },
+            () => fetchUnreadCount(session.user.id),
+          )
+          .subscribe();
       } catch (err) {
         console.log("init error:", err);
       }
@@ -109,7 +122,6 @@ export default function App() {
         setUserBucks(profile?.nba_bucks ?? 500);
         const isMod = await fetchModerator(session.user.id);
         setIsModerator(isMod);
-        await fetchUnreadCount(session.user.id);
       } else {
         setUsername(null);
         setIsModerator(false);
@@ -118,23 +130,8 @@ export default function App() {
       }
     });
 
-    // Realtime unread count listener — outside init so cleanup works
-    const msgChannel = supabase
-      .channel("unread-count")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "messages" },
-        () => {
-          supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session) fetchUnreadCount(session.user.id);
-          });
-        },
-      )
-      .subscribe();
-
     return () => {
       subscription.unsubscribe();
-      supabase.removeChannel(msgChannel);
       clearTimeout(timeout);
     };
   }, []);
