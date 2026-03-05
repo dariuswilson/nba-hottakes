@@ -36,6 +36,10 @@ async function settleNow(userId) {
     "Pending predictions:",
     pending.map((p) => ({ game_id: p.game_id, team: p.team_picked })),
   );
+  console.log(
+    "Game scores:",
+    finishedGames.map((g) => ({ id: g.id, score: g.score })),
+  );
   let totalWinnings = 0;
 
   for (const pred of pending) {
