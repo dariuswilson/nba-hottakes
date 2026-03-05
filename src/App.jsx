@@ -65,6 +65,60 @@ export default function App() {
     setUnreadCount(count || 0);
   };
 
+  const settleUserBets = async (userId) => {
+    try {
+      const res = await fetch("/api/nba-scores");
+      const data = await res.json();
+      const finishedGames = (data.games || []).filter(
+        (g) => g.status === "closed",
+      );
+      if (finishedGames.length === 0) return;
+
+      const { data: pending } = await supabase
+        .from("predictions")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("status", "pending")
+        .is("settled_at", null);
+
+      if (!pending || pending.length === 0) return;
+
+      let totalWinnings = 0;
+      for (const pred of pending) {
+        const game = finishedGames.find((g) => g.id === pred.game_id);
+        if (!game) continue;
+        const homeScore = game.score[game.home];
+        const awayScore = game.score[game.away];
+        const winner = homeScore > awayScore ? game.home : game.away;
+        const won = winner === pred.team_picked;
+        await supabase
+          .from("predictions")
+          .update({
+            status: won ? "won" : "lost",
+            settled_at: new Date().toISOString(),
+          })
+          .eq("id", pred.id);
+        if (won) totalWinnings += pred.payout;
+      }
+
+      if (totalWinnings > 0) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("nba_bucks")
+          .eq("user_id", userId)
+          .single();
+        const newBalance = (profile?.nba_bucks || 0) + totalWinnings;
+        await supabase
+          .from("profiles")
+          .update({ nba_bucks: newBalance })
+          .eq("user_id", userId);
+        setUserBucks(newBalance);
+      }
+    } catch {
+      /* continue */
+    }
+  };
+
   useEffect(() => {
     const timeout = setTimeout(() => setLoading(false), 3000);
 
@@ -92,6 +146,7 @@ export default function App() {
         setIsModerator(isMod);
 
         await fetchUnreadCount(session.user.id);
+        await settleUserBets(session.user.id);
 
         // eslint-disable-next-line no-unused-vars
         const msgChannel = supabase

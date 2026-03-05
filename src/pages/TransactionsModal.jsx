@@ -1,106 +1,9 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../supabase";
 
-async function settleNow(userId) {
-  // Fetch pending predictions
-  const { data: pending } = await supabase
-    .from("predictions")
-    .select("*")
-    .eq("user_id", userId)
-    .eq("status", "pending");
-
-  if (!pending || pending.length === 0) return 0;
-
-  // Fetch current scores
-  let games = [];
-  try {
-    const res = await fetch("/api/nba-scores");
-    const data = await res.json();
-    games = data.games || [];
-  } catch {
-    return 0;
-  }
-
-  const finishedGames = games.filter((g) => g.status === "closed");
-  console.log(
-    "All games:",
-    games.map((g) => ({
-      id: g.id,
-      status: g.status,
-      home: g.home,
-      away: g.away,
-    })),
-  );
-  console.log("Finished games:", finishedGames.length);
-  console.log(
-    "Pending predictions:",
-    pending.map((p) => ({ game_id: p.game_id, team: p.team_picked })),
-  );
-  console.log(
-    "Game scores:",
-    finishedGames.map((g) => ({ id: g.id, score: g.score })),
-  );
-  let totalWinnings = 0;
-
-  for (const pred of pending) {
-    const game = finishedGames.find((g) => g.id === pred.game_id);
-    if (!game) continue;
-
-    const homeScore = game.score[game.home];
-    const awayScore = game.score[game.away];
-    const winner = homeScore > awayScore ? game.home : game.away;
-    const won = winner === pred.team_picked;
-
-    console.log("Settling:", {
-      game_id: pred.game_id,
-      team_picked: pred.team_picked,
-      winner,
-      won,
-      homeScore,
-      awayScore,
-    });
-
-    const { error } = await supabase;
-    await supabase
-      .from("predictions")
-      .update({
-        status: won ? "won" : "lost",
-        settled_at: new Date().toISOString(),
-      })
-      .eq("id", pred.id);
-
-    if (won) totalWinnings += pred.payout;
-    console.log("Update result:", { id: pred.id, error });
-  }
-
-  if (totalWinnings > 0) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("nba_bucks")
-      .eq("user_id", userId)
-      .single();
-
-    const newBalance = (profile?.nba_bucks || 0) + totalWinnings;
-    await supabase
-      .from("profiles")
-      .update({ nba_bucks: newBalance })
-      .eq("user_id", userId);
-
-    return totalWinnings;
-  }
-  return 0;
-}
-
-export default function TransactionsModal({
-  userId,
-  username,
-  onClose,
-  onBucksUpdate,
-}) {
+export default function TransactionsModal({ userId, username, onClose }) {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [settling, setSettling] = useState(false);
-  const [settledMessage, setSettledMessage] = useState("");
 
   const loadTransactions = async () => {
     const { data } = await supabase
@@ -114,22 +17,6 @@ export default function TransactionsModal({
 
   useEffect(() => {
     const init = async () => {
-      setSettling(true);
-      const winnings = await settleNow(userId);
-      if (winnings > 0) {
-        setSettledMessage(
-          `🎉 Settled! You won 💰${winnings.toLocaleString()} NBA Bucks!`,
-        );
-        if (onBucksUpdate) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("nba_bucks")
-            .eq("user_id", userId)
-            .single();
-          onBucksUpdate(profile?.nba_bucks || 0);
-        }
-      }
-      setSettling(false);
       await loadTransactions();
     };
     init();
@@ -177,28 +64,6 @@ export default function TransactionsModal({
             ✕
           </button>
         </div>
-
-        {/* Settling indicator */}
-        {settling && (
-          <div
-            className="px-6 py-3 text-xs text-zinc-400 text-center"
-            style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
-          >
-            Checking for settled bets...
-          </div>
-        )}
-        {settledMessage && (
-          <div
-            className="px-6 py-3 text-xs text-center font-semibold"
-            style={{
-              background: "rgba(34,197,94,0.1)",
-              borderBottom: "1px solid rgba(34,197,94,0.2)",
-              color: "#22c55e",
-            }}
-          >
-            {settledMessage}
-          </div>
-        )}
 
         {/* Summary */}
         <div
