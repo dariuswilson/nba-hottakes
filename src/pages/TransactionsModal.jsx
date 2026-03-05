@@ -51,6 +51,16 @@ async function settleNow(userId) {
     const winner = homeScore > awayScore ? game.home : game.away;
     const won = winner === pred.team_picked;
 
+    console.log("Settling:", {
+      game_id: pred.game_id,
+      team_picked: pred.team_picked,
+      winner,
+      won,
+      homeScore,
+      awayScore,
+    });
+
+    const { error } = await supabase;
     await supabase
       .from("predictions")
       .update({
@@ -60,6 +70,7 @@ async function settleNow(userId) {
       .eq("id", pred.id);
 
     if (won) totalWinnings += pred.payout;
+    console.log("Update result:", { id: pred.id, error });
   }
 
   if (totalWinnings > 0) {
