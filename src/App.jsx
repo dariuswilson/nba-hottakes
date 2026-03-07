@@ -67,6 +67,17 @@ export default function App() {
 
   const settleUserBets = async (userId) => {
     try {
+      const ABBR_MAP = {
+        SA: "SAS",
+        NO: "NOP",
+        GS: "GSW",
+        WSH: "WAS",
+        NY: "NYK",
+        UTAH: "UTA",
+        GSD: "GSW",
+      };
+
+      // const normalizeTeam = (abbr) => ABBR_MAP[abbr] || abbr;
       const res = await fetch("/api/nba-scores");
       const data = await res.json();
       const finishedGames = (data.games || []).filter(
@@ -86,11 +97,23 @@ export default function App() {
       let totalWinnings = 0;
       for (const pred of pending) {
         const game = finishedGames.find((g) => g.id === pred.game_id);
+        console.log("Matching:", {
+          pred_game_id: pred.game_id,
+          pred_team: pred.team_picked,
+          found_game: game ? `${game.home} vs ${game.away}` : "NO MATCH",
+          game_id: game?.id,
+        });
         if (!game) continue;
+
         const homeScore = game.score[game.home];
         const awayScore = game.score[game.away];
         const winner = homeScore > awayScore ? game.home : game.away;
         const won = winner === pred.team_picked;
+        console.log("Winner check:", {
+          winner,
+          team_picked: pred.team_picked,
+          won,
+        });
         await supabase
           .from("predictions")
           .update({
