@@ -168,7 +168,10 @@ export default function ModeratorPanel({
         </div>
 
         {/* Filter tabs */}
-        <div className="flex gap-2 mb-6">
+        <div
+          className="flex gap-2 mb-6 overflow-x-auto pb-1"
+          style={{ scrollbarWidth: "none" }}
+        >
           {["pending", "resolved", "dismissed", "all", "shadowbanned"].map(
             (f) => (
               <button
