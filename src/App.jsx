@@ -22,6 +22,7 @@ export default function App() {
   const [activeConvo, setActiveConvo] = useState(null);
   const [showTransactions, setShowTransactions] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isBanned, setIsBanned] = useState(false);
 
   const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
   const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -188,6 +189,7 @@ export default function App() {
 
         if (profile?.banned) {
           await supabase.auth.signOut();
+          setIsBanned(true);
           setLoading(false);
           clearTimeout(timeout);
           return;
@@ -255,7 +257,7 @@ export default function App() {
       </div>
     );
 
-  if (!session) return <Login />;
+  if (!session) return <Login isBanned={isBanned} />;
   if (!username)
     return <UsernameSetup user={session.user} onComplete={setUsername} />;
 

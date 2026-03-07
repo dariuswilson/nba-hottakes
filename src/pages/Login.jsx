@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { supabase } from "../supabase";
 
-export default function Login() {
+export default function Login({ isBanned = false }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
@@ -65,6 +65,27 @@ export default function Login() {
             HotTakes
           </span>
         </div>
+        {isBanned && (
+          <div
+            className="mb-6 px-4 py-3 rounded-xl text-sm"
+            style={{
+              background: "rgba(239,68,68,0.1)",
+              border: "1px solid rgba(239,68,68,0.25)",
+            }}
+          >
+            <p className="text-red-400 font-semibold mb-0.5">
+              🔨 Account Banned
+            </p>
+            <p className="text-red-400/70 text-xs">
+              Your account has been banned for violating community guidelines.
+              If you believe this is a mistake, please contact support.
+            </p>
+          </div>
+        )}
+
+        <p className="text-zinc-400 text-sm mb-8">
+          {isSignUp ? "Create your account" : "Welcome back"}
+        </p>
 
         <p className="text-zinc-400 text-sm mb-8">
           {isSignUp ? "Create your account" : "Welcome back"}
