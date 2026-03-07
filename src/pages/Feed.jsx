@@ -194,7 +194,7 @@ export default function Feed({
         unreadCount={unreadCount}
       />
       <div className="max-w-5xl mx-auto px-6 py-6 flex gap-6">
-        <div className="w-64 flex-shrink-0 hidden lg:block">
+        <div className="w-72 flex-shrink-0 hidden lg:block">
           <Leaderboard onViewProfile={onViewProfile} />
         </div>
         <div className="flex-1 min-w-0">
