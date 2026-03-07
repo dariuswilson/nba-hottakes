@@ -539,17 +539,16 @@ export default function Messages({
     if (!group) return;
 
     // Get last message
-    const { data: lastMsg } = await supabase
+    const { data: lastMsgs } = await supabase
       .from("messages")
       .select("content")
       .eq("group_id", teamAbbr)
       .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
+      .limit(1);
 
     setGroupChat({
       ...group,
-      lastMessage: lastMsg?.content || null,
+      lastMessage: lastMsgs?.[0]?.content || null,
     });
 
     // Get members
@@ -693,6 +692,8 @@ export default function Messages({
     await supabase.from("messages").insert({
       sender_id: user.id,
       sender_username: username,
+      receiver_id: user.id,
+      receiver_username: username,
       group_id: activeGroup.id,
       content: newMessage.trim(),
     });
