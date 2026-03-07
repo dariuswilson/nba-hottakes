@@ -180,6 +180,7 @@ export default function ViewProfile({
         onProfileClick={onProfileClick}
         onBucksClick={onBucksClick}
         unreadCount={unreadCount}
+        isModerator={isModerator}
         onModPanelClick={onModPanelClick}
       />
       <div className="max-w-2xl mx-auto p-6">
