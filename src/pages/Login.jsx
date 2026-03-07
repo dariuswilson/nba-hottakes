@@ -24,11 +24,26 @@ export default function Login({ isBanned = false }) {
       if (error) setError(error.message);
       else setVerified(true);
     } else {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-      if (error) setError(error.message);
+      if (error) {
+        setError(error.message);
+      } else {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("banned")
+          .eq("user_id", data.user.id)
+          .single();
+
+        if (profile?.banned) {
+          await supabase.auth.signOut();
+          setError(
+            "🔨 Your account has been banned for violating community guidelines. If you believe this is a mistake, please contact support.",
+          );
+        }
+      }
     }
 
     setLoading(false);
