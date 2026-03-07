@@ -18,6 +18,8 @@ export default function Feed({
   onMessagesClick,
   onBucksClick,
   unreadCount,
+  isModerator,
+  onModPanelClick,
 }) {
   const [takes, setTakes] = useState([]);
   const [newTake, setNewTake] = useState("");
@@ -192,6 +194,8 @@ export default function Feed({
         onMessagesClick={onMessagesClick}
         onBucksClick={onBucksClick}
         unreadCount={unreadCount}
+        isModerator={isModerator}
+        onModPanelClick={onModPanelClick}
       />
       <div className="max-w-5xl mx-auto px-6 py-6 flex gap-6">
         <div className="w-72 flex-shrink-0 hidden lg:block">
