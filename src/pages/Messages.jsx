@@ -651,9 +651,11 @@ export default function Messages({
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "messages" },
-        () => {
+        (payload) => {
           fetchConversations();
-          if (activeGroup) fetchGroupMessages(activeGroup.id);
+          if (payload.new.group_id) {
+            fetchGroupMessages(payload.new.group_id);
+          }
         },
       )
       .subscribe();
