@@ -55,7 +55,8 @@ export default function Leaderboard({ onViewProfile }) {
         const { data } = await supabase
           .from("predictions")
           .select("user_id, username")
-          .eq("status", "won");
+          .eq("status", "won")
+          .not("settled_at", "is", null);
 
         const counts = {};
         data?.forEach((p) => {
@@ -69,6 +70,12 @@ export default function Leaderboard({ onViewProfile }) {
           .slice(0, 5);
 
         const usernames = sorted.map((u) => u.username);
+        if (usernames.length === 0) {
+          setLeaders([]);
+          setLoading(false);
+          return;
+        }
+
         const { data: profiles } = await supabase
           .from("profiles")
           .select("username, avatar_url")
@@ -89,7 +96,8 @@ export default function Leaderboard({ onViewProfile }) {
         const { data } = await supabase
           .from("predictions")
           .select("user_id, username, status")
-          .in("status", ["won", "lost"]);
+          .in("status", ["won", "lost"])
+          .not("settled_at", "is", null);
 
         const stats = {};
         data?.forEach((p) => {
@@ -104,6 +112,12 @@ export default function Leaderboard({ onViewProfile }) {
           .map((u) => ({ ...u, pct: Math.round((u.wins / u.total) * 100) }))
           .sort((a, b) => b.pct - a.pct)
           .slice(0, 5);
+
+        if (sorted.length === 0) {
+          setLeaders([]);
+          setLoading(false);
+          return;
+        }
 
         const usernames = sorted.map((u) => u.username);
         const { data: profiles } = await supabase
@@ -124,19 +138,20 @@ export default function Leaderboard({ onViewProfile }) {
         );
       } else if (activeTab === "today") {
         const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
+        todayStart.setUTCHours(0, 0, 0, 0); // Use UTC midnight to match DB
 
         const { data } = await supabase
           .from("predictions")
           .select("user_id, username, payout, amount")
           .eq("status", "won")
+          .not("settled_at", "is", null)
           .gte("settled_at", todayStart.toISOString());
 
         const totals = {};
         data?.forEach((p) => {
           if (!totals[p.user_id])
             totals[p.user_id] = { username: p.username, earned: 0 };
-          totals[p.user_id].earned += p.payout - p.amount;
+          totals[p.user_id].earned += p.payout;
         });
 
         const sorted = Object.values(totals)
@@ -162,7 +177,7 @@ export default function Leaderboard({ onViewProfile }) {
           sorted.map((u) => ({
             username: u.username,
             avatar_url: avatarMap[u.username] || null,
-            value: `+💰 ${u.earned.toLocaleString()}`,
+            value: `💰 ${u.earned.toLocaleString()} won`,
             subvalue: "today",
           })),
         );
