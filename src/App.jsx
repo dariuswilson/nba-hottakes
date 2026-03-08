@@ -300,7 +300,6 @@ export default function App() {
             setPage("viewProfile");
           }}
           onMessagesClick={() => {
-            setUnreadCount(0);
             setPage("messages");
           }}
           onBucksClick={() => setShowTransactions(true)}
@@ -327,7 +326,6 @@ export default function App() {
             setPage("messages");
           }}
           onMessagesClick={() => {
-            setUnreadCount(0);
             setPage("messages");
           }}
           unreadCount={unreadCount}
@@ -352,7 +350,6 @@ export default function App() {
             setPage("viewProfile");
           }}
           onMessagesClick={() => {
-            setUnreadCount(0);
             setPage("messages");
           }}
           unreadCount={unreadCount}
@@ -371,7 +368,6 @@ export default function App() {
           onProfileClick={() => setPage("profile")}
           onLogout={() => supabase.auth.signOut()}
           onMessagesClick={() => {
-            setUnreadCount(0);
             setPage("messages");
           }}
           onViewProfile={(u) => {
@@ -381,6 +377,7 @@ export default function App() {
           onBack={() => setPage("feed")}
           unreadCount={unreadCount}
           onBucksClick={() => setShowTransactions(true)}
+          onUnreadUpdate={(count) => setUnreadCount(count)}
         />
       )}
 
@@ -397,7 +394,6 @@ export default function App() {
             setPage("viewProfile");
           }}
           onMessagesClick={() => {
-            setUnreadCount(0);
             setPage("messages");
           }}
           onBucksClick={() => setShowTransactions(true)}
@@ -424,7 +420,6 @@ export default function App() {
             setPage("gameFeed");
           }}
           onMessagesClick={() => {
-            setUnreadCount(0);
             setPage("messages");
           }}
           unreadCount={unreadCount}

@@ -527,6 +527,7 @@ export default function Messages({
   onBucksClick,
   isModerator,
   onModPanelClick,
+  onUnreadUpdate,
 }) {
   const [conversations, setConversations] = useState([]);
   const [activeConvo, setActiveConvo] = useState(null);
@@ -659,6 +660,15 @@ export default function Messages({
       .eq("receiver_id", user.id)
       .eq("sender_id", partnerId)
       .eq("read", false);
+
+    const { count } = await supabase
+      .from("messages")
+      .select("*", { count: "exact", head: true })
+      .eq("receiver_id", user.id)
+      .eq("read", false);
+
+    if (onUnreadUpdate) onUnreadUpdate(count || 0);
+    await fetchConversations();
   };
 
   useEffect(() => {
