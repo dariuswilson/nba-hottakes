@@ -303,7 +303,7 @@ function AppInner() {
     onLogout: () => supabase.auth.signOut(),
     onGameClick: (g) => {
       setViewingGame(g);
-      navigate("/game");
+      navigate(`/game/${g.id}`);
     },
     onDM: (target) => {
       setActiveConvo(target);
@@ -351,7 +351,7 @@ function AppInner() {
           }
         />
         <Route
-          path="/game"
+          path="/game/:gameId"
           element={
             <GameFeedWrapper {...sharedProps} viewingGame={viewingGame} />
           }
