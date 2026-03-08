@@ -24,10 +24,10 @@ function ViewProfileWrapper(props) {
   return <ViewProfile {...props} username={username} />;
 }
 
-function GameFeedWrapper(props) {
+function GameFeedWrapper({ viewingGame, ...props }) {
   const navigate = useNavigate();
-  if (!props.viewingGame) return <Navigate to="/" replace />;
-  return <GameFeed {...props} onBack={() => navigate(-1)} />;
+  if (!viewingGame) return <Navigate to="/" replace />;
+  return <GameFeed {...props} game={viewingGame} onBack={() => navigate(-1)} />;
 }
 
 function AppInner() {
