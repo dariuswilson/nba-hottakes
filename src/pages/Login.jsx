@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { supabase } from "../supabase";
-import CommunityGuidelines from "./CommunityGuidelines";
 
 export default function Login({ isBanned = false }) {
   const [mode, setMode] = useState("signin"); // "signin" | "signup"
@@ -11,7 +10,6 @@ export default function Login({ isBanned = false }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [verified, setVerified] = useState(false);
-  const [showGuidelines, setShowGuidelines] = useState(false);
 
   const passwordsMatch = confirmPassword && password === confirmPassword;
   const passwordsMismatch = confirmPassword && password !== confirmPassword;
@@ -91,10 +89,6 @@ export default function Login({ isBanned = false }) {
     setPassword("");
     setConfirmPassword("");
   };
-
-  if (showGuidelines) {
-    return <CommunityGuidelines onBack={() => setShowGuidelines(false)} />;
-  }
 
   return (
     <div
@@ -541,19 +535,7 @@ export default function Login({ isBanned = false }) {
                   lineHeight: 1.5,
                 }}
               >
-                By continuing you agree to the{" "}
-                <span
-                  onClick={() => setShowGuidelines(true)}
-                  style={{
-                    color: "#f97316",
-                    cursor: "pointer",
-                    textDecoration: "underline",
-                    textDecorationStyle: "dotted",
-                  }}
-                >
-                  RimRantz Community Guidelines
-                </span>
-                .
+                By continuing you agree to the RimRantz Community Guidelines.
               </p>
             </>
           )}

@@ -1,4 +1,12 @@
 import { useState, useEffect, useRef } from "react";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 import { supabase } from "./supabase";
 import Login from "./pages/Login";
 import Feed from "./pages/Feed";
@@ -9,13 +17,23 @@ import GameFeed from "./pages/GameFeed";
 import Messages from "./pages/Messages";
 import TransactionsModal from "./pages/TransactionsModal";
 import ModeratorPanel from "./pages/ModeratorPanel";
+import CommunityGuidelines from "./pages/CommunityGuidelines";
 
-export default function App() {
+function ViewProfileWrapper(props) {
+  const { username } = useParams();
+  return <ViewProfile {...props} username={username} />;
+}
+
+function GameFeedWrapper(props) {
+  const navigate = useNavigate();
+  if (!props.viewingGame) return <Navigate to="/" replace />;
+  return <GameFeed {...props} onBack={() => navigate(-1)} />;
+}
+
+function AppInner() {
   const [session, setSession] = useState(null);
   const [username, setUsername] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState("feed");
-  const [viewingUsername, setViewingUsername] = useState(null);
   const [isModerator, setIsModerator] = useState(false);
   const [viewingGame, setViewingGame] = useState(null);
   const [userBucks, setUserBucks] = useState(0);
@@ -24,10 +42,10 @@ export default function App() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isBanned, setIsBanned] = useState(false);
   const settleIntervalRef = useRef(null);
+  const navigate = useNavigate();
 
   const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
   const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
   const rawHeaders = {
     apikey: SUPABASE_KEY,
     Authorization: `Bearer ${SUPABASE_KEY}`,
@@ -71,7 +89,6 @@ export default function App() {
   const settleUserBets = async (userId) => {
     try {
       const ABBR_MAP = {
-        // Short forms → Standard
         SA: "SAS",
         NO: "NOP",
         GS: "GSW",
@@ -79,7 +96,6 @@ export default function App() {
         NY: "NYK",
         UTAH: "UTA",
         PHX: "PHX",
-        // Alternate ESPN abbreviations
         BKN: "BKN",
         BRK: "BKN",
         CHA: "CHA",
@@ -101,7 +117,6 @@ export default function App() {
         POR: "POR",
         SAC: "SAC",
         TOR: "TOR",
-        // Common mismatches
         ATL: "ATL",
         BOS: "BOS",
         CHI: "CHI",
@@ -113,8 +128,8 @@ export default function App() {
         WAS: "WAS",
         GSW: "GSW",
       };
-
       const normalizeTeam = (abbr) => ABBR_MAP[abbr] || abbr;
+
       const res = await fetch("/api/nba-scores");
       const data = await res.json();
       const finishedGames = (data.games || []).filter(
@@ -157,7 +172,6 @@ export default function App() {
 
       let newBalance = (profile?.nba_bucks || 0) + totalWinnings;
       if (newBalance <= 0) newBalance = 10;
-
       await supabase
         .from("profiles")
         .update({ nba_bucks: newBalance })
@@ -186,7 +200,6 @@ export default function App() {
         }
 
         setSession(session);
-
         const profile = await fetchProfile(session.user.id);
 
         if (profile?.banned) {
@@ -206,7 +219,6 @@ export default function App() {
         await fetchUnreadCount(session.user.id);
         await settleUserBets(session.user.id);
 
-        // Re-check every 2 minutes while app is open
         settleIntervalRef.current = setInterval(
           () => settleUserBets(session.user.id),
           120000,
@@ -237,7 +249,6 @@ export default function App() {
       setSession(session);
       if (session) {
         const profile = await fetchProfile(session.user.id);
-
         if (profile?.banned) {
           await supabase.auth.signOut();
           setIsBanned(true);
@@ -276,6 +287,30 @@ export default function App() {
   if (!username)
     return <UsernameSetup user={session.user} onComplete={setUsername} />;
 
+  const sharedProps = {
+    user: session.user,
+    username,
+    userBucks,
+    isModerator,
+    unreadCount,
+    onBucksUpdate: setUserBucks,
+    onUnreadUpdate: (count) => setUnreadCount(count),
+    onBucksClick: () => setShowTransactions(true),
+    onMessagesClick: () => navigate("/messages"),
+    onProfileClick: () => navigate("/profile"),
+    onModPanelClick: () => navigate("/mod"),
+    onViewProfile: (u) => navigate(`/user/${u}`),
+    onLogout: () => supabase.auth.signOut(),
+    onGameClick: (g) => {
+      setViewingGame(g);
+      navigate("/game");
+    },
+    onDM: (target) => {
+      setActiveConvo(target);
+      navigate("/messages");
+    },
+  };
+
   return (
     <>
       {showTransactions && (
@@ -287,146 +322,60 @@ export default function App() {
         />
       )}
 
-      {page === "profile" && (
-        <Profile
-          username={username}
-          user={session.user}
-          isModerator={isModerator}
-          userBucks={userBucks}
-          onModPanelClick={() => setPage("modPanel")}
-          onBack={() => setPage("feed")}
-          onProfileClick={() => setPage("profile")}
-          onViewProfile={(u) => {
-            setViewingUsername(u);
-            setPage("viewProfile");
-          }}
-          onMessagesClick={() => {
-            setPage("messages");
-          }}
-          onBucksClick={() => setShowTransactions(true)}
-          unreadCount={unreadCount}
+      <Routes>
+        <Route path="/" element={<Feed {...sharedProps} />} />
+        <Route
+          path="/profile"
+          element={<Profile {...sharedProps} onBack={() => navigate("/")} />}
         />
-      )}
-
-      {page === "viewProfile" && (
-        <ViewProfile
-          username={viewingUsername}
-          currentUser={session.user}
-          currentUsername={username}
-          currentUserBucks={userBucks}
-          isModerator={isModerator}
-          onModPanelClick={() => setPage("modPanel")}
-          onBack={() => setPage("feed")}
-          onProfileClick={() => setPage("profile")}
-          onViewProfile={(u) => {
-            setViewingUsername(u);
-            setPage("viewProfile");
-          }}
-          onDM={(target) => {
-            setActiveConvo(target);
-            setPage("messages");
-          }}
-          onMessagesClick={() => {
-            setPage("messages");
-          }}
-          unreadCount={unreadCount}
-          onBucksClick={() => setShowTransactions(true)}
+        <Route
+          path="/user/:username"
+          element={
+            <ViewProfileWrapper
+              {...sharedProps}
+              currentUser={session.user}
+              currentUsername={username}
+              currentUserBucks={userBucks}
+              onBack={() => navigate(-1)}
+            />
+          }
         />
-      )}
-
-      {page === "gameFeed" && (
-        <GameFeed
-          game={viewingGame}
-          user={session.user}
-          username={username}
-          userBucks={userBucks}
-          onBucksUpdate={setUserBucks}
-          isModerator={isModerator}
-          onModPanelClick={() => setPage("modPanel")}
-          onProfileClick={() => setPage("profile")}
-          onLogout={() => supabase.auth.signOut()}
-          onBack={() => setPage("feed")}
-          onViewProfile={(u) => {
-            setViewingUsername(u);
-            setPage("viewProfile");
-          }}
-          onMessagesClick={() => {
-            setPage("messages");
-          }}
-          unreadCount={unreadCount}
-          onBucksClick={() => setShowTransactions(true)}
+        <Route
+          path="/messages"
+          element={
+            <Messages
+              {...sharedProps}
+              initialConvo={activeConvo}
+              onBack={() => navigate("/")}
+            />
+          }
         />
-      )}
-
-      {page === "messages" && (
-        <Messages
-          user={session.user}
-          username={username}
-          userBucks={userBucks}
-          isModerator={isModerator}
-          onModPanelClick={() => setPage("modPanel")}
-          initialConvo={activeConvo}
-          onProfileClick={() => setPage("profile")}
-          onLogout={() => supabase.auth.signOut()}
-          onMessagesClick={() => {
-            setPage("messages");
-          }}
-          onViewProfile={(u) => {
-            setViewingUsername(u);
-            setPage("viewProfile");
-          }}
-          onBack={() => setPage("feed")}
-          unreadCount={unreadCount}
-          onBucksClick={() => setShowTransactions(true)}
-          onUnreadUpdate={(count) => setUnreadCount(count)}
+        <Route
+          path="/game"
+          element={
+            <GameFeedWrapper {...sharedProps} viewingGame={viewingGame} />
+          }
         />
-      )}
-
-      {page === "modPanel" && (
-        <ModeratorPanel
-          user={session.user}
-          username={username}
-          userBucks={userBucks}
-          isModerator={isModerator}
-          onBack={() => setPage("feed")}
-          onProfileClick={() => setPage("profile")}
-          onViewProfile={(u) => {
-            setViewingUsername(u);
-            setPage("viewProfile");
-          }}
-          onMessagesClick={() => {
-            setPage("messages");
-          }}
-          onBucksClick={() => setShowTransactions(true)}
-          unreadCount={unreadCount}
-          onModPanelClick={() => setPage("modPanel")}
+        <Route
+          path="/mod"
+          element={
+            <ModeratorPanel {...sharedProps} onBack={() => navigate("/")} />
+          }
         />
-      )}
-
-      {page === "feed" && (
-        <Feed
-          username={username}
-          user={session.user}
-          isModerator={isModerator}
-          onModPanelClick={() => setPage("modPanel")}
-          userBucks={userBucks}
-          onBucksUpdate={setUserBucks}
-          onProfileClick={() => setPage("profile")}
-          onViewProfile={(u) => {
-            setViewingUsername(u);
-            setPage("viewProfile");
-          }}
-          onGameClick={(g) => {
-            setViewingGame(g);
-            setPage("gameFeed");
-          }}
-          onMessagesClick={() => {
-            setPage("messages");
-          }}
-          unreadCount={unreadCount}
-          onBucksClick={() => setShowTransactions(true)}
+        <Route
+          path="/guidelines"
+          element={<CommunityGuidelines onBack={() => navigate(-1)} />}
         />
-      )}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppInner />
+    </BrowserRouter>
   );
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
 
 export default function Navbar({
@@ -7,7 +8,6 @@ export default function Navbar({
   userBucks,
   onProfileClick,
   onLogout,
-  onViewProfile,
   onMessagesClick,
   onBucksClick,
   unreadCount = 0,
@@ -21,6 +21,7 @@ export default function Navbar({
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const searchRef = useRef(null);
   const profileRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -61,7 +62,7 @@ export default function Navbar({
   const handleSelect = (u) => {
     setShowResults(false);
     setSearch("");
-    if (onViewProfile) onViewProfile(u.username);
+    navigate(`/user/${u.username}`);
   };
 
   return (
@@ -74,7 +75,10 @@ export default function Navbar({
     >
       <div className="w-full px-3 py-3 flex items-center gap-2">
         {/* Logo */}
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div
+          className="flex items-center gap-2 flex-shrink-0 cursor-pointer"
+          onClick={() => navigate("/")}
+        >
           <div
             className="w-8 h-8 rounded-lg flex items-center justify-center text-lg flex-shrink-0"
             style={{ background: "linear-gradient(135deg, #f97316, #ef4444)" }}
@@ -89,7 +93,7 @@ export default function Navbar({
               WebkitTextFillColor: "transparent",
             }}
           >
-            HotTakes
+            RimRantz
           </span>
         </div>
 
@@ -237,7 +241,6 @@ export default function Navbar({
               <span className="hidden md:inline text-xs">@{username}</span>
             </button>
 
-            {/* Dropdown menu */}
             {showProfileMenu && (
               <div
                 className="absolute top-full right-0 mt-2 w-44 rounded-2xl overflow-hidden z-50"
