@@ -23,7 +23,7 @@ export default function ModeratorPanel({
   user,
   onBack,
   onViewProfile,
-  currentAvatarUrl,
+  avatarUrl,
   ...props
 }) {
   const [reports, setReports] = useState([]);
@@ -136,7 +136,7 @@ export default function ModeratorPanel({
 
   return (
     <div className="min-h-screen text-white" style={{ background: "#080810" }}>
-      <Navbar {...props} avatarUrl={currentAvatarUrl} />
+      <Navbar {...props} avatarUrl={avatarUrl} />
 
       <div className="max-w-3xl mx-auto p-4 md:p-6">
         {/* Header */}
