@@ -63,6 +63,19 @@ export default function Login({ isBanned = false }) {
           username: username.toLowerCase(),
         });
         console.log("insert error:", insertError);
+
+        // Award first 30 badge
+        const { count } = await supabase
+          .from("profiles")
+          .select("*", { count: "exact", head: true });
+
+        if (count <= 30) {
+          await supabase.from("user_badges").insert({
+            user_id: authData.user.id,
+            badge_key: "first_30",
+          });
+        }
+
         setVerified(true);
       }
     } else {

@@ -442,12 +442,20 @@ export default function Profile({
                     background: "linear-gradient(135deg, #f59e0b, #f97316)",
                   }}
                 >
-                  <span className="text-sm">🏆</span>
-                  <span className="text-black font-bold text-xs">
-                    {badge.badge_key === "first_100"
-                      ? "First 100"
-                      : badge.badge_key}
-                  </span>
+                  <div
+                    title={
+                      badge.badge_key === "first_30"
+                        ? "One of the first 30 members to join RimRantz!"
+                        : ""
+                    }
+                  >
+                    <span className="text-sm">⭐</span>
+                    <span className="text-black font-bold text-xs">
+                      {badge.badge_key === "first_30"
+                        ? "Founding Member"
+                        : badge.badge_key}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
