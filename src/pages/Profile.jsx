@@ -227,7 +227,7 @@ export default function Profile({
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
-      <Navbar {...props} />
+      <Navbar {...props} username={username} />
       <div className="max-w-2xl mx-auto p-6">
         {/* Back button */}
         <button

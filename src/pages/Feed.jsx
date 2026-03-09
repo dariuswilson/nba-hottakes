@@ -195,7 +195,13 @@ export default function Feed({
       )}
 
       {/* Top navbar */}
-      <Navbar {...props} onLogout={handleLogout} avatarUrl={avatarUrl} />
+      <Navbar
+        {...props}
+        onLogout={handleLogout}
+        avatarUrl={avatarUrl}
+        username={username}
+        userBucks={userBucks}
+      />
       <div className="max-w-5xl mx-auto px-6 py-6 flex gap-6">
         <div className="w-72 flex-shrink-0 hidden lg:block">
           <Leaderboard onViewProfile={onViewProfile} />
