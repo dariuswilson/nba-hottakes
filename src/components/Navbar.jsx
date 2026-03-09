@@ -81,9 +81,13 @@ export default function Navbar({
         >
           <div
             className="w-8 h-8 rounded-lg flex items-center justify-center text-lg flex-shrink-0"
-            style={{ background: "linear-gradient(135deg, #f97316, #ef4444)" }}
+            // style={{ background: "linear-gradient(135deg, #f97316, #ef4444)" }}
           >
-            🏀
+            <img
+              src="/favicon.png"
+              alt="RimRantz"
+              className="w-8 h-8 rounded-lg flex-shrink-0"
+            />
           </div>
           <span
             className="font-black text-lg tracking-tight hidden md:block"
@@ -93,7 +97,7 @@ export default function Navbar({
               WebkitTextFillColor: "transparent",
             }}
           >
-            RimRantz
+            imRantz
           </span>
         </div>
 
