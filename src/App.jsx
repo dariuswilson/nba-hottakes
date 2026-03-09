@@ -10,7 +10,6 @@ import {
 import { supabase } from "./supabase";
 import Login from "./pages/Login";
 import Feed from "./pages/Feed";
-import UsernameSetup from "./pages/UsernameSetup";
 import Profile from "./pages/Profile";
 import ViewProfile from "./pages/ViewProfile";
 import GameFeed from "./pages/GameFeed";
@@ -284,8 +283,6 @@ function AppInner() {
     );
 
   if (!session) return <Login isBanned={isBanned} />;
-  if (!username)
-    return <UsernameSetup user={session.user} onComplete={setUsername} />;
 
   const sharedProps = {
     user: session.user,

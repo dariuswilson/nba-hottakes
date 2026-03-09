@@ -46,16 +46,24 @@ export default function Login({ isBanned = false }) {
         return;
       }
 
-      const { error } = await supabase.auth.signUp({
+      const { data: authData, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: "https://nba-hottakes-app.vercel.app",
+          emailRedirectTo: "https://rimrantz.com/",
           data: { username: username.toLowerCase() },
         },
       });
-      if (error) setError(error.message);
-      else setVerified(true);
+
+      if (error) {
+        setError(error.message);
+      } else {
+        await supabase.from("profiles").insert({
+          user_id: authData.user.id,
+          username: username.toLowerCase(),
+        });
+        setVerified(true);
+      }
     } else {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
