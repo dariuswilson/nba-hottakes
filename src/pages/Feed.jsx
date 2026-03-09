@@ -15,6 +15,7 @@ export default function Feed({
   onGameClick,
   userBucks,
   onBucksUpdate,
+  avatarUrl,
   ...props
 }) {
   const [takes, setTakes] = useState([]);
@@ -27,7 +28,6 @@ export default function Feed({
   const [error, setError] = useState("");
   const [moderatorIds, setModeratorIds] = useState(new Set());
   const [visibleTakes, setVisibleTakes] = useState(10);
-  const [avatarUrl, setAvatarUrl] = useState(null);
   const [reportModal, setReportModal] = useState(null);
 
   const fetchModerators = async () => {
@@ -74,13 +74,6 @@ export default function Feed({
       await fetchReactions();
       await fetchComments();
       await fetchModerators();
-
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("avatar_url")
-        .eq("user_id", user.id)
-        .single();
-      setAvatarUrl(profileData?.avatar_url || null);
     };
     loadData();
 

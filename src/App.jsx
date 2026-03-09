@@ -43,6 +43,7 @@ function AppInner() {
   const [isBanned, setIsBanned] = useState(false);
   const settleIntervalRef = useRef(null);
   const navigate = useNavigate();
+  const [avatarUrl, setAvatarUrl] = useState(null);
 
   const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
   const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -54,9 +55,10 @@ function AppInner() {
   const fetchProfile = async (userId) => {
     try {
       const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/profiles?select=username,nba_bucks,banned&user_id=eq.${userId}&limit=1`,
+        `${SUPABASE_URL}/rest/v1/profiles?select=username,nba_bucks,banned,avatar_url&user_id=eq.${userId}&limit=1`,
         { headers: rawHeaders },
       );
+
       const data = await res.json();
       return data?.[0] || null;
     } catch {
@@ -211,7 +213,8 @@ function AppInner() {
         }
 
         setUsername(profile?.username || null);
-        setUserBucks(profile?.nba_bucks ?? 500);
+        setUserBucks(profile?.nba_bucks ?? 1000);
+        setAvatarUrl(profile?.avatar_url || null);
 
         const isMod = await fetchModerator(session.user.id);
         setIsModerator(isMod);
@@ -255,7 +258,8 @@ function AppInner() {
           return;
         }
         setUsername(profile?.username || null);
-        setUserBucks(profile?.nba_bucks ?? 500);
+        setUserBucks(profile?.nba_bucks ?? 1000);
+        setAvatarUrl(profile?.avatar_url || null);
         const isMod = await fetchModerator(session.user.id);
         setIsModerator(isMod);
       } else {
@@ -291,6 +295,7 @@ function AppInner() {
     userBucks,
     isModerator,
     unreadCount,
+    avatarUrl,
     onBucksUpdate: setUserBucks,
     onUnreadUpdate: (count) => setUnreadCount(count),
     onBucksClick: () => setShowTransactions(true),
