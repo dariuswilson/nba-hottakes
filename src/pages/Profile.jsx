@@ -212,6 +212,7 @@ export default function Profile({
       .update({
         discord_id: data.discord_id,
         discord_username: data.discord_username,
+        discord_verified: true,
       })
       .eq("user_id", user.id);
 
@@ -485,11 +486,25 @@ export default function Profile({
               </div>
               <div>
                 <p className="text-white text-sm font-semibold">Discord</p>
-                <p className="text-zinc-500 text-xs">
-                  {profile?.discord_username
-                    ? `@${profile.discord_username} linked ✅`
-                    : "Not linked"}
-                </p>
+                {profile?.discord_username ? (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-zinc-300 text-xs font-medium">
+                      @{profile.discord_username}
+                    </span>
+                    <span
+                      className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                      style={{
+                        background: "rgba(34,197,94,0.15)",
+                        color: "#22c55e",
+                        border: "1px solid rgba(34,197,94,0.25)",
+                      }}
+                    >
+                      ✓ Verified
+                    </span>
+                  </div>
+                ) : (
+                  <p className="text-zinc-500 text-xs">Not linked</p>
+                )}
               </div>
             </div>
             {!profile?.discord_username && (
