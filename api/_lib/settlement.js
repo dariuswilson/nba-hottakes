@@ -14,16 +14,31 @@ export async function fetchFinishedGameWinners() {
       const comp = e.competitions?.[0];
       const home = comp?.competitors?.find((t) => t.homeAway === "home");
       const away = comp?.competitors?.find((t) => t.homeAway === "away");
-      const homeScore = parseInt(home?.score) || 0;
-      const awayScore = parseInt(away?.score) || 0;
+      const homeScore = parseInt(home?.score, 10);
+      const awayScore = parseInt(away?.score, 10);
+
+      // Guard: skip if scores are missing or equal (both 0 means data not loaded;
+      // equal non-zero scores are impossible in a finished NBA game).
+      if (!Number.isFinite(homeScore) || !Number.isFinite(awayScore) || homeScore === awayScore) {
+        console.warn(
+          `[settlement] Skipping game ${e.id}: suspicious scores ${homeScore}-${awayScore} — will retry on next run`,
+        );
+        return null;
+      }
+
       const winner = homeScore > awayScore ? home?.team?.abbreviation : away?.team?.abbreviation;
+      const normalizedWinner = normalizeTeam(String(winner || "").toUpperCase());
+
+      console.log(
+        `[settlement] Game ${e.id}: home ${home?.team?.abbreviation} ${homeScore} - ${awayScore} ${away?.team?.abbreviation} → winner: ${normalizedWinner}`,
+      );
 
       return {
         game_id: String(e.id),
-        winner: normalizeTeam(String(winner || "").toUpperCase()),
+        winner: normalizedWinner,
       };
     })
-    .filter((g) => g.game_id && g.winner);
+    .filter((g) => g && g.game_id && g.winner);
 }
 
 export async function fetchFinishedWinnerForGame(gameId) {
