@@ -14,9 +14,13 @@ export default async function handler(req, res) {
         const comp = event.competitions[0];
         const home = comp.competitors.find((t) => t.homeAway === "home");
         const away = comp.competitors.find((t) => t.homeAway === "away");
-        const status = event.status.type.name;
-        const clock = event.status.displayClock;
-        const period = event.status.period;
+
+        const statusType = event.status?.type || {};
+        const statusName = statusType.name || "";
+        const statusState = statusType.state || "";
+        const isCompleted = Boolean(statusType.completed);
+        const clock = event.status?.displayClock || "";
+        const period = Number(event.status?.period ?? 0);
 
         // Build win probabilities
         let homeWinPct = null;
@@ -50,15 +54,15 @@ export default async function handler(req, res) {
           "vs",
           away.team.abbreviation,
           "status:",
-          status,
+          statusName,
+          "state:",
+          statusState,
+          "completed:",
+          isCompleted,
           "clock:",
           clock,
           "period:",
           period,
-          "detail:",
-          event.status.type.detail,
-          "shortDetail:",
-          event.status.type.shortDetail,
           "homeWinPct:",
           homeWinPct,
           "awayWinPct:",
@@ -68,9 +72,9 @@ export default async function handler(req, res) {
         return {
           id: event.id,
           status:
-            status === "STATUS_FINAL"
+            isCompleted || statusName === "STATUS_FINAL"
               ? "closed"
-              : status === "STATUS_IN_PROGRESS"
+              : statusState === "in" || statusName === "STATUS_IN_PROGRESS"
                 ? "inprogress"
                 : "scheduled",
           start_time: event.date,
